@@ -2,12 +2,12 @@
     "name": "infrangible/m2-task",
     "description": "Infrangible Magento 2 Task",
     "type": "magento2-module",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "license": "MIT",
     "keywords": [
         "Magento"
     ],
-    "homepage": "https://github.com/infrangible/m2-task",
+    "homepage": "https://github.com/infrangible-dev/m2-task",
     "authors": [
         {
             "name": "Andreas Knollmann",
@@ -18,8 +18,8 @@
     ],
     "require": {
         "php": ">=7.1",
-        "magento/framework": "~101.0.0|~102.0.0|~103.0.0",
-        "monolog/monolog": "<2.7.0",
+        "magento/framework": "~103.0.4",
+        "monolog/monolog": ">=2.7",
         "infrangible/m2-backend-widget": "~1.0",
         "infrangible/m2-log": "~1.0"
     },

@@ -54,13 +54,13 @@ abstract class Base
 
         $this->getTask()->launch();
 
-        $errorSummary = $this->getTask()->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ERROR, true, false);
+        $errorSummary = $this->getTask()->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ERROR);
 
         if ( ! empty($errorSummary)) {
             throw new Exception($errorSummary);
         }
 
-        return $this->getTask()->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ALL);
+        return $this->getTask()->getSummary();
     }
 
     /**
@@ -88,8 +88,8 @@ abstract class Base
         if ($this->task === null) {
             $this->task = $this->instanceHelper->getInstance($this->getClassName());
 
-            if ( ! ($this->task instanceof Base)) {
-                throw new Exception(sprintf('Task must extend %s', Base::class));
+            if ( ! ($this->task instanceof \Infrangible\Task\Task\Base)) {
+                throw new Exception(sprintf('Task must extend %s', \Infrangible\Task\Task\Base::class));
             }
         }
 

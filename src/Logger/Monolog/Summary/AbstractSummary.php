@@ -8,6 +8,7 @@ use Infrangible\Core\Helper\Registry;
 use Infrangible\Task\Logger\Monolog\Handler\Summary\AbstractHandler;
 use Infrangible\Task\Logger\Record;
 use Magento\Framework\Logger\Monolog;
+use Monolog\DateTimeImmutable;
 
 /**
  * @author      Andreas Knollmann
@@ -78,14 +79,19 @@ abstract class AbstractSummary
     abstract protected function getHandlerClass(): string;
 
     /**
-     * @param int    $level   The logging level
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param int                    $level    The logging level
+     * @param string                 $message  The log message
+     * @param array                  $context  The log context
+     * @param DateTimeImmutable|null $datetime Optional log date to log into the past or future
      *
      * @return Boolean Whether the record has been processed
      * @throws Exception
      */
-    public function addRecord($level, $message, array $context = []): bool
+    public function addRecord(
+        int $level,
+        string $message,
+        array $context = [],
+        DateTimeImmutable $datetime = null): bool
     {
         $this->prepareTaskHandler();
 

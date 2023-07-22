@@ -2,8 +2,10 @@
 
 namespace Infrangible\Task\Logger\Monolog;
 
+use Exception;
 use Infrangible\Core\Helper\Instances;
 use Infrangible\Core\Helper\Registry;
+use Monolog\DateTimeImmutable;
 use Monolog\Handler\AbstractHandler;
 use Monolog\Logger;
 
@@ -43,6 +45,7 @@ abstract class AbstractLog
 
     /**
      * @return AbstractHandler
+     * @throws Exception
      */
     public function prepareTaskHandler(): AbstractHandler
     {
@@ -54,6 +57,10 @@ abstract class AbstractLog
         if ( ! array_key_exists($taskKey, $this->taskHandlers)) {
             /** @var AbstractHandler $handler */
             $handler = $this->instanceHelper->getInstance($this->getHandlerClass());
+
+            if ($handler === null) {
+                throw new Exception(sprintf('Invalid handler class: %s', $this->getHandlerClass()));
+            }
 
             $this->pushHandler($handler);
 
@@ -69,13 +76,19 @@ abstract class AbstractLog
     abstract protected function getHandlerClass(): string;
 
     /**
-     * @param int    $level   The logging level
-     * @param string $message The log message
-     * @param array  $context The log context
+     * @param int                    $level    The logging level
+     * @param string                 $message  The log message
+     * @param array                  $context  The log context
+     * @param DateTimeImmutable|null $datetime Optional log date to log into the past or future
      *
      * @return Boolean Whether the record has been processed
+     * @throws Exception
      */
-    public function addRecord($level, $message, array $context = []): bool
+    public function addRecord(
+        int $level,
+        string $message,
+        array $context = [],
+        DateTimeImmutable $datetime = null): bool
     {
         $this->prepareTaskHandler();
 

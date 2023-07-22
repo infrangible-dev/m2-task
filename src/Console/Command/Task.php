@@ -48,5 +48,5 @@ abstract class Task
     /**
      * @return string
      */
-    protected abstract function getTaskName(): string;
+    abstract protected function getTaskName(): string;
 }
