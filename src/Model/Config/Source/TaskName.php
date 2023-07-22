@@ -35,9 +35,7 @@ class TaskName
 
         $taskNameQuery->order('task_name ASC');
 
-        $taskNames = $this->databaseHelper->fetchCol($taskNameQuery);
-
-        return $taskNames;
+        return $this->databaseHelper->fetchCol($taskNameQuery);
     }
 
     /**
