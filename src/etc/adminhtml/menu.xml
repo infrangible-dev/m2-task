@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<!--
+ * @author      Andreas Knollmann
+ * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @license     http://www.opensource.org/licenses/mit-license.php MIT
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Infrangible_Task::infrangible_task" title="Tasks" module="Infrangible_Task" sortOrder="360" resource="Infrangible_Task::infrangible_task" parent="Infrangible_Foundation::menu"/>
+        <add id="Infrangible_Task::task_run" title="Runs" module="Infrangible_Task" sortOrder="10" resource="Infrangible_Task::task_run" action="infrangible_task/run_result/index" parent="Infrangible_Task::infrangible_task"/>
+    </menu>
+</config>
