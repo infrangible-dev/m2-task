@@ -34,6 +34,9 @@ abstract class File
     /** @var string[] */
     private $importedFiles = [];
 
+    /** @var bool */
+    private $emptyRun = true;
+
     /**
      * @param Files                                            $fileHelper
      * @param Registry                                         $registryHelper
@@ -101,6 +104,8 @@ abstract class File
         $fileCounter = count($importFiles);
 
         if ($fileCounter) {
+            $this->setEmptyRun(false);
+
             for ($i = 0; $i < $fileCounter; $i++) {
                 if (array_key_exists($i, $importFiles)) {
                     $this->logging->info(sprintf('Importing file %d/%d: %s', $i + 1, $fileCounter, $importFiles[ $i ]));
@@ -272,5 +277,21 @@ abstract class File
     protected function isSuppressEmptyMails(): bool
     {
         return $this->getTaskSetting('suppress_empty_mails', false, true);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEmptyRun(): bool
+    {
+        return $this->emptyRun;
+    }
+
+    /**
+     * @param bool $emptyRun
+     */
+    public function setEmptyRun(bool $emptyRun): void
+    {
+        $this->emptyRun = $emptyRun;
     }
 }
