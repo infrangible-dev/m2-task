@@ -1,74 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Task;
 
 use Exception;
-use Infrangible\Core\Helper\Registry;
-use Infrangible\Task\Helper\Data;
-use Infrangible\Task\Model\RunFactory;
-use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Mail\Template\TransportBuilder;
-use Magento\Store\Model\App\Emulation;
-use Psr\Log\LoggerInterface;
-use Tofex\Help\Files;
-use Tofex\Help\Variables;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 abstract class File
-    extends Base
+    extends Files
 {
-    /** @var Variables */
-    protected $variableHelper;
-
-    /** @var \Infrangible\Core\Helper\Files */
-    protected $coreFilesHelper;
-
     /** @var array */
     private $importFiles;
 
-    /** @var string[] */
+    /** @var bool[] */
     private $importedFiles = [];
 
     /** @var bool */
     private $emptyRun = true;
-
-    /**
-     * @param Files                                            $fileHelper
-     * @param Registry                                         $registryHelper
-     * @param Data                                             $helper
-     * @param LoggerInterface                                  $logger
-     * @param Emulation                                        $appEmulation
-     * @param DirectoryList                                    $directoryList
-     * @param TransportBuilder                                 $transportBuilder
-     * @param RunFactory                                       $runFactory
-     * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
-     * @param Variables                                        $variableHelper
-     * @param \Infrangible\Core\Helper\Files                   $coreFilesHelper
-     */
-    public function __construct(
-        Files $fileHelper,
-        Registry $registryHelper,
-        Data $helper,
-        LoggerInterface $logger,
-        Emulation $appEmulation,
-        DirectoryList $directoryList,
-        TransportBuilder $transportBuilder,
-        RunFactory $runFactory,
-        \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory,
-        Variables $variableHelper,
-        \Infrangible\Core\Helper\Files $coreFilesHelper)
-    {
-        parent::__construct($fileHelper, $registryHelper, $helper, $logger, $appEmulation, $directoryList,
-            $transportBuilder, $runFactory, $runResourceFactory);
-
-        $this->variableHelper = $variableHelper;
-        $this->coreFilesHelper = $coreFilesHelper;
-    }
 
     /**
      * @return void
@@ -76,17 +30,7 @@ abstract class File
      */
     protected function prepare()
     {
-        if ($this->variableHelper->isEmpty($this->getImportPath())) {
-            throw new Exception('No path to import specified');
-        }
-
-        if ($this->variableHelper->isEmpty($this->getArchivePath())) {
-            throw new Exception('No archive path specified');
-        }
-
-        if ($this->variableHelper->isEmpty($this->getErrorPath())) {
-            throw new Exception('No error path specified');
-        }
+        $this->validatePaths();
     }
 
     /**
@@ -137,47 +81,10 @@ abstract class File
      */
     protected function dismantle(bool $success)
     {
-        $archivePath = $this->getArchivePath();
-        $errorPath = $this->getErrorPath();
-
         foreach ($this->importedFiles as $importedFile => $result) {
-            $importedFileArchivePath = $this->coreFilesHelper->determineFilePath($result ? $archivePath : $errorPath);
-
-            $importedFileArchiveFileName =
-                $this->fileHelper->determineFilePath($this->getArchiveFileName(basename($importedFile)),
-                    $importedFileArchivePath, true);
-
-            if ( ! file_exists($importedFileArchivePath)) {
-                if (mkdir($importedFileArchivePath, 0777, true)) {
-                    $this->logging->info(sprintf('Archive path %s successful created', $importedFileArchivePath));
-                } else {
-                    $this->logging->error(sprintf('Cannot create archive path %s', $importedFileArchivePath));
-                }
-            }
-
-            $this->logging->info(sprintf('Moving import file: %s to archive file: %s', $importedFile,
-                $importedFileArchiveFileName));
-
-            if ( ! $this->isTest()) {
-                if ( ! rename($importedFile, $importedFileArchiveFileName)) {
-                    throw new Exception(sprintf('Could not move import file: %s to archive file: %s', $importedFile,
-                        $importedFileArchiveFileName));
-                }
-            } else {
-                if ( ! copy($importedFile, $importedFileArchiveFileName)) {
-                    throw new Exception(sprintf('Could not move import file: %s to archive file: %s', $importedFile,
-                        $importedFileArchiveFileName));
-                }
-            }
+            $this->archiveImportFile($importedFile, $result);
         }
     }
-
-    /**
-     * @param string $importFileName
-     *
-     * @return string
-     */
-    abstract protected function getArchiveFileName(string $importFileName): string;
 
     /**
      * Determine the files to import and returns them.
@@ -194,7 +101,7 @@ abstract class File
 
             $filePattern = $this->getFilePattern();
 
-            if ( ! $this->variableHelper->isEmpty($filePattern)) {
+            if ( ! $this->variables->isEmpty($filePattern)) {
                 $filteredImportFiles = [];
 
                 $filePattern = preg_replace('/\//', '\\\/', $filePattern);
@@ -238,45 +145,9 @@ abstract class File
      * @return string
      * @throws NoSuchEntityException
      */
-    protected function getImportPath(): string
-    {
-        return $this->getTaskSetting('path');
-    }
-
-    /**
-     * @return string
-     * @throws NoSuchEntityException
-     */
     protected function getFilePattern(): string
     {
         return $this->getTaskSetting('file_pattern');
-    }
-
-    /**
-     * @return string
-     * @throws NoSuchEntityException
-     */
-    protected function getArchivePath(): string
-    {
-        return $this->getTaskSetting('archive_path');
-    }
-
-    /**
-     * @return string
-     * @throws NoSuchEntityException
-     */
-    protected function getErrorPath(): string
-    {
-        return $this->getTaskSetting('error_path');
-    }
-
-    /**
-     * @return bool
-     * @throws NoSuchEntityException
-     */
-    protected function isSuppressEmptyMails(): bool
-    {
-        return $this->getTaskSetting('suppress_empty_mails', false, true);
     }
 
     /**

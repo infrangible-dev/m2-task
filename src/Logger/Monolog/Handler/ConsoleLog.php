@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog\Handler;
 
 use Infrangible\Core\Helper\Registry;
@@ -48,7 +50,7 @@ class ConsoleLog
      */
     public function isHandling(array $record): bool
     {
-        if ( ! $this->initialize()) {
+        if (!$this->initialize()) {
             return false;
         }
 
@@ -69,13 +71,13 @@ class ConsoleLog
      */
     protected function initialize(): bool
     {
-        if ( ! $this->initialized) {
+        if (!$this->initialized) {
             $console = $this->registryHelper->registry('current_task_console');
             $taskName = $this->registryHelper->registry('current_task_name');
             $taskId = $this->registryHelper->registry('current_task_id');
             $taskLogLevel = $this->registryHelper->registry('current_task_log_level');
 
-            if ($console && ! empty($taskName) && ! empty($taskId) && ! empty($taskLogLevel)) {
+            if ($console && !empty($taskName) && !empty($taskId) && !empty($taskLogLevel)) {
                 switch (strtolower($taskLogLevel)) {
                     case 'off':
                         $level = Logger::EMERGENCY + 1;
@@ -125,10 +127,10 @@ class ConsoleLog
      *
      * @return void
      */
-    protected function write(array $record)
+    protected function write(array $record): void
     {
         if (array_key_exists('formatted', $record)) {
-            $this->output->write((string)$record[ 'formatted' ]);
+            $this->output->write((string) $record['formatted']);
         }
     }
 }

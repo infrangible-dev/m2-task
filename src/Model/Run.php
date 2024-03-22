@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Model;
 
 use Exception;
 use Magento\Framework\Model\AbstractModel;
-use Zend_Date;
 
 /**
  * @author      Andreas Knollmann
@@ -49,18 +50,20 @@ class Run
      * @param string $storeCode
      * @param string $taskName
      * @param string $taskId
-     * @param int    $test
+     * @param bool   $test
      *
      * @throws Exception
      */
-    public function start(string $storeCode, string $taskName, string $taskId, int $test)
+    public function start(string $storeCode, string $taskName, string $taskId, bool $test)
     {
+        $processId = getmypid();
+
         $this->setStoreCode($storeCode);
         $this->setTaskName($taskName);
         $this->setTaskId($taskId);
-        $this->setProcessId(getmypid());
-        $this->setTest($test);
-        $this->setStartAt(Zend_Date::now());
+        $this->setProcessId($processId === false ? '' : strval($processId));
+        $this->setTest($test ? 1 : 0);
+        $this->setStartAt(gmdate('Y-m-d H:i:s'));
     }
 
     /**
@@ -73,6 +76,6 @@ class Run
         $this->setMaxMemoryUsage($maxMemoryUsage);
         $this->setSuccess($success ? 1 : 0);
         $this->setEmptyRun($emptyRun ? 1 : 0);
-        $this->setFinishAt(Zend_Date::now());
+        $this->setFinishAt(gmdate('Y-m-d H:i:s'));
     }
 }

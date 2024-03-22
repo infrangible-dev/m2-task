@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Console\Command\Script;
 
 use Exception;
@@ -15,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 abstract class Task
@@ -41,8 +43,8 @@ abstract class Task
     public function __construct(
         Instances $instanceHelper,
         Emulation $appEmulation,
-        RendererInterface $renderer)
-    {
+        RendererInterface $renderer
+    ) {
         $this->instanceHelper = $instanceHelper;
 
         $this->appEmulation = $appEmulation;
@@ -80,8 +82,14 @@ abstract class Task
 
         $task = $this->getTask();
 
-        $task->init($storeCode, $taskName, $taskId, $input->getOption('log_level'), $input->getOption('console'),
-            $input->getOption('test'));
+        $task->init(
+            $storeCode,
+            $taskName,
+            $taskId,
+            $input->getOption('log_level'),
+            $input->getOption('console'),
+            $input->getOption('test')
+        );
 
         $task->launch();
 
@@ -109,7 +117,7 @@ abstract class Task
         if ($this->task === null) {
             $this->task = $this->instanceHelper->getInstance($this->getClassName());
 
-            if ( ! ($this->task instanceof Base)) {
+            if (!($this->task instanceof Base)) {
                 throw new Exception(sprintf('Task must extend %s', Base::class));
             }
         }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog\Handler\Summary;
 
 use Infrangible\Core\Helper\Registry;
@@ -45,7 +47,7 @@ class Success
      */
     public function isHandling(array $record): bool
     {
-        if ( ! $this->initialize()) {
+        if (!$this->initialize()) {
             return false;
         }
 
@@ -58,8 +60,8 @@ class Success
             return false;
         }
 
-        return parent::isHandling($record) && array_key_exists('level', $record) &&
-            $record[ 'level' ] < ($this->taskLogWarnAsError ? Logger::WARNING : Logger::ERROR);
+        return parent::isHandling($record) && array_key_exists('level', $record)
+            && $record['level'] < ($this->taskLogWarnAsError ? Logger::WARNING : Logger::ERROR);
     }
 
     /**
@@ -67,12 +69,12 @@ class Success
      */
     protected function initialize(): bool
     {
-        if ( ! $this->initialized) {
+        if (!$this->initialized) {
             $this->taskLogWarnAsError = $this->registryHelper->registry('current_task_log_warn_as_error');
 
             $taskLogLevel = $this->registryHelper->registry('current_task_log_level');
 
-            if ( ! empty($taskLogLevel)) {
+            if (!empty($taskLogLevel)) {
                 switch (strtolower($taskLogLevel)) {
                     case 'off':
                         $level = Logger::EMERGENCY + 1;

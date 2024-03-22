@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Block\Adminhtml\Run;
 
 use Exception;
@@ -12,7 +14,7 @@ use Magento\Backend\Block\Widget\ButtonFactory;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class View
@@ -53,8 +55,8 @@ class View
         RunFactory $runFactory,
         \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory,
         ButtonFactory $buttonFactory,
-        array $data = [])
-    {
+        array $data = []
+    ) {
         parent::__construct($context, $data);
 
         $this->fileHelper = $fileHelper;
@@ -86,7 +88,7 @@ class View
 
             $runId = $this->getData('run_id');
 
-            if ( ! empty($runId)) {
+            if (!empty($runId)) {
                 $this->runResourceFactory->create()->load($this->run, $runId);
             }
         }
@@ -104,9 +106,14 @@ class View
 
             if ($run->getId()) {
                 try {
-                    $this->logFileName =
-                        $this->fileHelper->determineFilePath(sprintf('var/log/task/%s/%s/%s.log', $run->getTaskName(),
-                            $run->getStoreCode(), $run->getTaskId()));
+                    $this->logFileName = $this->fileHelper->determineFilePath(
+                        sprintf(
+                            'var/log/task/%s/%s/%s.log',
+                            $run->getTaskName(),
+                            $run->getStoreCode(),
+                            $run->getTaskId()
+                        )
+                    );
                 } catch (Exception $exception) {
                 }
             }
@@ -151,9 +158,14 @@ class View
 
             if ($run->getId()) {
                 try {
-                    $this->errorFileName =
-                        $this->fileHelper->determineFilePath(sprintf('var/log/task/%s/%s/%s.err', $run->getTaskName(),
-                            $run->getStoreCode(), $run->getTaskId()));
+                    $this->errorFileName = $this->fileHelper->determineFilePath(
+                        sprintf(
+                            'var/log/task/%s/%s/%s.err',
+                            $run->getTaskName(),
+                            $run->getStoreCode(),
+                            $run->getTaskId()
+                        )
+                    );
                 } catch (Exception $exception) {
                 }
             }
@@ -192,15 +204,17 @@ class View
     public function getBackButtonHtml(): string
     {
         $backButton = $this->buttonFactory->create([
-            'data' => [
-                'id'      => 'back',
-                'title'   => __('Back'),
-                'label'   => __('Back'),
-                'class'   => 'back',
-                'onclick' => sprintf("window.location.href = '%s';",
-                    $this->getUrl('infrangible_task/run_result/index')),
-            ]
-        ]);
+                                                       'data' => [
+                                                           'id'      => 'back',
+                                                           'title'   => __('Back'),
+                                                           'label'   => __('Back'),
+                                                           'class'   => 'back',
+                                                           'onclick' => sprintf(
+                                                               "window.location.href = '%s';",
+                                                               $this->getUrl('infrangible_task/run_result/index')
+                                                           ),
+                                                       ]
+                                                   ]);
 
         return $backButton->toHtml();
     }

@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Task;
 
 use Exception;
+use FeWeDev\Base\Files;
 use Infrangible\Core\Helper\Registry;
 use Infrangible\Task\Helper\Data;
 use Infrangible\Task\Logger\ISummary;
@@ -22,7 +25,6 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\Store;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
-use Tofex\Help\Files;
 
 /**
  * @author      Andreas Knollmann
@@ -42,7 +44,7 @@ abstract class Base
     public const SUMMARY_TYPE_SUCCESS = 'success';
 
     /** @var Files */
-    protected $fileHelper;
+    protected $files;
 
     /** @var Registry */
     protected $registryHelper;
@@ -99,7 +101,7 @@ abstract class Base
     private $registryValues = [];
 
     /**
-     * @param Files                                            $fileHelper
+     * @param Files                                            $files
      * @param Registry                                         $registryHelper
      * @param Data                                             $helper
      * @param LoggerInterface                                  $logging
@@ -110,7 +112,7 @@ abstract class Base
      * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
      */
     public function __construct(
-        Files $fileHelper,
+        Files $files,
         Registry $registryHelper,
         Data $helper,
         LoggerInterface $logging,
@@ -118,12 +120,11 @@ abstract class Base
         DirectoryList $directoryList,
         TransportBuilder $transportBuilder,
         RunFactory $runFactory,
-        \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory)
-    {
-        $this->fileHelper = $fileHelper;
+        \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
+    ) {
+        $this->files = $files;
         $this->registryHelper = $registryHelper;
         $this->helper = $helper;
-
         $this->logging = $logging;
         $this->appEmulation = $appEmulation;
         $this->directoryList = $directoryList;
@@ -161,8 +162,8 @@ abstract class Base
         string $taskId,
         string $logLevel = null,
         bool $console = false,
-        bool $test = false)
-    {
+        bool $test = false
+    ) {
         $this->storeRegistryValues();
 
         $this->storeCode = $storeCode;
@@ -172,13 +173,13 @@ abstract class Base
 
         $maxMemory = $this->getTaskSetting('max_memory');
 
-        if ( ! empty($maxMemory)) {
+        if (!empty($maxMemory)) {
             ini_set('memory_limit', sprintf('%dM', $maxMemory));
         }
 
         $list = $this->getTaskSetting('depends_on');
 
-        if ( ! empty($list)) {
+        if (!empty($list)) {
             $this->dependencyList = explode(';', $list);
         }
 
@@ -188,10 +189,10 @@ abstract class Base
 
         if (empty($logLevel)) {
             $logLevel =
-                (string)$this->helper->getTaskConfigValue($this->taskName, 'logging', 'log_level', LogLevel::INFO);
+                (string) $this->helper->getTaskConfigValue($this->taskName, 'logging', 'log_level', LogLevel::INFO);
         }
 
-        $logWarnAsError = (int)$this->helper->getTaskConfigValue($this->taskName, 'logging', 'log_warn_as_error', 1);
+        $logWarnAsError = (int) $this->helper->getTaskConfigValue($this->taskName, 'logging', 'log_warn_as_error', 1);
 
         $this->registryHelper->register('current_task_name', $taskName, false, true);
         $this->registryHelper->register('current_task_id', $taskId, false, true);
@@ -205,12 +206,12 @@ abstract class Base
      */
     protected function storeRegistryValues()
     {
-        $this->registryValues[ 'current_task_name' ] = $this->registryHelper->registry('current_task_name');
-        $this->registryValues[ 'current_task_id' ] = $this->registryHelper->registry('current_task_id');
-        $this->registryValues[ 'current_task_log_level' ] = $this->registryHelper->registry('current_task_log_level');
-        $this->registryValues[ 'current_task_log_warn_as_error' ] =
+        $this->registryValues['current_task_name'] = $this->registryHelper->registry('current_task_name');
+        $this->registryValues['current_task_id'] = $this->registryHelper->registry('current_task_id');
+        $this->registryValues['current_task_log_level'] = $this->registryHelper->registry('current_task_log_level');
+        $this->registryValues['current_task_log_warn_as_error'] =
             $this->registryHelper->registry('current_task_log_warn_as_error');
-        $this->registryValues[ 'current_task_console' ] = $this->registryHelper->registry('current_task_console');
+        $this->registryValues['current_task_console'] = $this->registryHelper->registry('current_task_console');
     }
 
     /**
@@ -221,7 +222,7 @@ abstract class Base
     {
         $memoryUsageStart = $this->getCurrentMemoryUsage();
 
-        if ( ! $this->allowAdminStore && strcasecmp(trim($this->storeCode), 'admin') === 0) {
+        if (!$this->allowAdminStore && strcasecmp(trim($this->storeCode), 'admin') === 0) {
             throw new Exception(__('Task is not allowed to run with admin store.'));
         }
 
@@ -236,7 +237,7 @@ abstract class Base
         $success = true;
 
         // add Current task to the dependency list
-        if ( ! $this->waitForPredecessor) {
+        if (!$this->waitForPredecessor) {
             $this->dependencyList[] = $this->taskName;
         }
 
@@ -257,7 +258,9 @@ abstract class Base
         try {
             $this->prepare();
         } catch (Exception $exception) {
-            $this->logging->error(sprintf(__('Could not prepare task because: %s'), $exception->getMessage()));
+            $this->logging->error(
+                sprintf(__('Could not prepare task because: %s')->render(), $exception->getMessage())
+            );
             $this->logging->error($exception);
 
             $success = false;
@@ -265,13 +268,15 @@ abstract class Base
 
         if ($success) {
             try {
-                $this->logging->info(sprintf(__('Running task: %s'), $this->getTaskName()));
+                $this->logging->info(sprintf(__('Running task: %s')->render(), $this->getTaskName()));
 
                 $this->runTask();
 
-                $this->logging->info(sprintf(__('Finished task: %s'), $this->getTaskName()));
+                $this->logging->info(sprintf(__('Finished task: %s')->render(), $this->getTaskName()));
             } catch (Exception $exception) {
-                $this->logging->error(sprintf(__('Could not run task because: %s'), $exception->getMessage()));
+                $this->logging->error(
+                    sprintf(__('Could not run task because: %s')->render(), $exception->getMessage())
+                );
                 $this->logging->error($exception);
 
                 $success = false;
@@ -281,21 +286,27 @@ abstract class Base
         try {
             $this->dismantle($success);
         } catch (Exception $exception) {
-            $this->logging->error(sprintf(__('Could not dismantle task because: %s'), $exception->getMessage()));
+            $this->logging->error(
+                sprintf(__('Could not dismantle task because: %s')->render(), $exception->getMessage())
+            );
             $this->logging->error($exception);
         }
 
         try {
             $this->sendSummary(static::SUMMARY_TYPE_SUCCESS);
         } catch (Exception $exception) {
-            $this->logging->error(sprintf(__('Could not send success summary because: %s'), $exception->getMessage()));
+            $this->logging->error(
+                sprintf(__('Could not send success summary because: %s')->render(), $exception->getMessage())
+            );
             $this->logging->error($exception);
         }
 
         try {
             $this->sendSummary(static::SUMMARY_TYPE_ERROR);
         } catch (Exception $exception) {
-            $this->logging->error(sprintf(__('Could not send error summary because: %s'), $exception->getMessage()));
+            $this->logging->error(
+                sprintf(__('Could not send error summary because: %s')->render(), $exception->getMessage())
+            );
             $this->logging->error($exception);
         }
 
@@ -308,11 +319,15 @@ abstract class Base
 
         $memoryUsageEnd = $this->getCurrentMemoryUsage();
 
-        $this->logging->info(sprintf(__('Duration: %d minute(s), %d second(s)'), $minutes, $seconds));
-        $this->logging->info(sprintf(__('Max memory usage: %s MB'),
-            number_format(bcsub($memoryUsageEnd, $memoryUsageStart), 0, ',', '.')));
+        $this->logging->info(sprintf(__('Duration: %d minute(s), %d second(s)')->render(), $minutes, $seconds));
+        $this->logging->info(
+            sprintf(
+                __('Max memory usage: %s MB')->render(),
+                number_format(floatval(bcsub(strval($memoryUsageEnd), strval($memoryUsageStart))), 0, ',', '.')
+            )
+        );
 
-        $run->finish(bcsub($memoryUsageEnd, $memoryUsageStart), $success, $this->isEmptyRun());
+        $run->finish(intval(bcsub(strval($memoryUsageEnd), strval($memoryUsageStart))), $success, $this->isEmptyRun());
 
         $this->runResourceFactory->create()->save($run);
 
@@ -363,7 +378,7 @@ abstract class Base
     {
         $tempPath = $this->directoryList->getPath(DirectoryList::TMP);
 
-        $this->fileHelper->createDirectory($tempPath);
+        $this->files->createDirectory($tempPath);
 
         $file = sprintf('%s/task_%s.lock', $tempPath, $taskName);
 
@@ -418,9 +433,14 @@ abstract class Base
     private function checkDependencyTask(array $dependencyList): bool
     {
         foreach ($dependencyList as $taskName) {
-            if ( ! flock($this->createLockFile($taskName), LOCK_EX | LOCK_NB)) {
-                $this->logging->error(sprintf(__('The task: %s is still running and block the process of this task: %s.'),
-                    $taskName, $this->taskName));
+            if (!flock($this->createLockFile($taskName), LOCK_EX | LOCK_NB)) {
+                $this->logging->error(
+                    sprintf(
+                        __('The task: %s is still running and block the process of this task: %s.')->render(),
+                        $taskName,
+                        $this->taskName
+                    )
+                );
 
                 return false;
             } else {
@@ -466,51 +486,57 @@ abstract class Base
      */
     protected function sendSummary(string $type)
     {
-        $sendSummary = $this->helper->getTaskConfigValue($this->taskName, 'summary_' . $type, 'send', false, true);
+        $sendSummary = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'send', false, true);
 
         if ($sendSummary) {
             $content = $this->getSummary($type);
 
-            if ( ! empty($content)) {
+            if (!empty($content)) {
                 $content = $this->getSummary($type, true, true);
 
-                $sender = $this->helper->getTaskConfigValue($this->taskName, 'summary_' . $type, 'sender', 'general');
-                $subject = $this->helper->getTaskConfigValue($this->taskName, 'summary_' . $type, 'subject');
-                $recipients = $this->helper->getTaskConfigValue($this->taskName, 'summary_' . $type, 'recipients');
+                $sender = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'sender', 'general');
+                $subject = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'subject');
+                $recipients = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'recipients');
                 $copyRecipients =
-                    $this->helper->getTaskConfigValue($this->taskName, 'summary_' . $type, 'copy_recipients');
+                    $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'copy_recipients');
                 $blindCopyRecipients =
-                    $this->helper->getTaskConfigValue($this->taskName, 'summary_' . $type, 'blind_copy_recipients');
+                    $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'blind_copy_recipients');
 
-                $senderEmail = $this->helper->getStoreConfig('trans_email/ident_' . $sender . '/email');
-                $senderName = $this->helper->getStoreConfig('trans_email/ident_' . $sender . '/name');
+                $senderEmail = $this->helper->getStoreConfig('trans_email/ident_'.$sender.'/email');
+                $senderName = $this->helper->getStoreConfig('trans_email/ident_'.$sender.'/name');
 
                 if (empty($subject)) {
-                    $subject = __('Task: ') . $this->taskName . ' | ' . __('Summary: ') . $type;
+                    $subject = __('Task: ').$this->taskName.' | '.__('Summary: ').$type;
                 }
 
                 $storeDefaultTitle = $this->helper->getStoreConfig('design/head/default_title');
 
-                if ( ! empty($storeDefaultTitle)) {
-                    $subject = $storeDefaultTitle . ' - ' . $subject;
+                if (!empty($storeDefaultTitle)) {
+                    $subject = $storeDefaultTitle.' - '.$subject;
                 }
 
-                if ( ! empty($senderEmail) && ! empty($senderName)) {
+                if (!empty($senderEmail) && !empty($senderName)) {
                     if ($this->isProhibitSummarySending($type)) {
-                        $this->logging->debug(sprintf(__('Suppress sending summary of type: %s with subject: %s to recipients: %s'),
-                            $type, $subject, $recipients));
-                    } else if ( ! empty($recipients)) {
+                        $this->logging->debug(
+                            sprintf(
+                                __('Suppress sending summary of type: %s with subject: %s to recipients: %s')->render(),
+                                $type,
+                                $subject,
+                                $recipients
+                            )
+                        );
+                    } elseif (!empty($recipients)) {
                         $postObject = new DataObject();
                         $postObject->setData(['subject' => $subject, 'content' => $content]);
 
                         $this->transportBuilder->setTemplateIdentifier('task_result_template');
                         $this->transportBuilder->setTemplateOptions([
-                            'area'  => Area::AREA_ADMINHTML,
-                            'store' => Store::DEFAULT_STORE_ID
-                        ]);
+                                                                        'area'  => Area::AREA_ADMINHTML,
+                                                                        'store' => Store::DEFAULT_STORE_ID
+                                                                    ]);
                         $this->transportBuilder->setTemplateVars(['data' => $postObject]);
                         $this->transportBuilder->setFromByScope(['email' => $senderEmail, 'name' => $senderName],
-                            $this->storeCode);
+                                                                $this->storeCode);
 
                         $recipientEmails = explode(';', $recipients);
 
@@ -518,7 +544,7 @@ abstract class Base
                             $this->transportBuilder->addTo([trim($recipientEmail)]);
                         }
 
-                        if ( ! empty($copyRecipients)) {
+                        if (!empty($copyRecipients)) {
                             $copyRecipientEmails = explode(';', $copyRecipients);
 
                             foreach ($copyRecipientEmails as $recipientEmail) {
@@ -526,7 +552,7 @@ abstract class Base
                             }
                         }
 
-                        if ( ! empty($blindCopyRecipients)) {
+                        if (!empty($blindCopyRecipients)) {
                             $blindCopyRecipientEmails = explode(';', $blindCopyRecipients);
 
                             foreach ($blindCopyRecipientEmails as $recipientEmail) {
@@ -535,17 +561,42 @@ abstract class Base
                         }
 
                         try {
-                            if ( ! empty($copyRecipients)) {
-                                if ( ! empty($blindCopyRecipients)) {
-                                    $this->logging->debug(sprintf(__('Sending summary of type: %s with subject: %s to recipients: %s, copy to: %s and blind copy to: %s'),
-                                        $type, $subject, $recipients, $copyRecipients, $blindCopyRecipients));
+                            if (!empty($copyRecipients)) {
+                                if (!empty($blindCopyRecipients)) {
+                                    $this->logging->debug(
+                                        sprintf(
+                                            __(
+                                                'Sending summary of type: %s with subject: %s to recipients: %s, copy to: %s and blind copy to: %s'
+                                            )->render(),
+                                            $type,
+                                            $subject,
+                                            $recipients,
+                                            $copyRecipients,
+                                            $blindCopyRecipients
+                                        )
+                                    );
                                 } else {
-                                    $this->logging->debug(sprintf(__('Sending summary of type: %s with subject: %s to recipients: %s, copy to: %s'),
-                                        $type, $subject, $recipients, $copyRecipients));
+                                    $this->logging->debug(
+                                        sprintf(
+                                            __(
+                                                'Sending summary of type: %s with subject: %s to recipients: %s, copy to: %s'
+                                            )->render(),
+                                            $type,
+                                            $subject,
+                                            $recipients,
+                                            $copyRecipients
+                                        )
+                                    );
                                 }
                             } else {
-                                $this->logging->debug(sprintf(__('Sending summary of type: %s with subject: %s to recipients: %s'),
-                                    $type, $subject, $recipients));
+                                $this->logging->debug(
+                                    sprintf(
+                                        __('Sending summary of type: %s with subject: %s to recipients: %s')->render(),
+                                        $type,
+                                        $subject,
+                                        $recipients
+                                    )
+                                );
                             }
 
                             $this->appEmulation->stopEnvironmentEmulation();
@@ -554,20 +605,37 @@ abstract class Base
 
                             $transport->sendMessage();
 
-                            $this->appEmulation->startEnvironmentEmulation($this->storeCode, Area::AREA_ADMINHTML,
-                                true);
+                            $this->appEmulation->startEnvironmentEmulation(
+                                $this->storeCode,
+                                Area::AREA_ADMINHTML,
+                                true
+                            );
                         } catch (Exception $exception) {
-                            $this->logging->error(sprintf(__('Could not send summary of type: %s because: %s'), $type,
-                                $exception->getMessage()));
+                            $this->logging->error(
+                                sprintf(
+                                    __('Could not send summary of type: %s because: %s')->render(),
+                                    $type,
+                                    $exception->getMessage()
+                                )
+                            );
                             $this->logging->error($exception);
                         }
                     } else {
-                        $this->logging->error(sprintf(__('Could not send summary of type: %s because no recipients were configured'),
-                            $type));
+                        $this->logging->error(
+                            sprintf(
+                                __('Could not send summary of type: %s because no recipients were configured')->render(
+                                ),
+                                $type
+                            )
+                        );
                     }
                 } else {
-                    $this->logging->error(sprintf(__('Could not send summary of type: %s because no sender was configured'),
-                        $type));
+                    $this->logging->error(
+                        sprintf(
+                            __('Could not send summary of type: %s because no sender was configured')->render(),
+                            $type
+                        )
+                    );
                 }
             }
         }
@@ -591,8 +659,8 @@ abstract class Base
     public function getSummary(
         string $type = self::SUMMARY_TYPE_ALL,
         bool $flat = true,
-        bool $addSummaryInformation = false)
-    {
+        bool $addSummaryInformation = false
+    ) {
         $taskKey = md5(json_encode([$this->getTaskName(), $this->getTaskId()]));
 
         /** @var ISummary $summary */
@@ -605,14 +673,14 @@ abstract class Base
 
                 if ($addSummaryInformation) {
                     foreach ($this->getSummaryInformation() as $record) {
-                        $flatSummary .= "\n" . trim($record->getMessage());
+                        $flatSummary .= "\n".trim($record->getMessage());
                     }
 
                     $flatSummary .= "\n";
                 }
 
                 foreach ($records as $record) {
-                    $flatSummary .= "\n" . trim($record->getMessage());
+                    $flatSummary .= "\n".trim($record->getMessage());
                 }
 
                 return trim($flatSummary);
@@ -639,10 +707,16 @@ abstract class Base
         string $field,
         $defaultValue = null,
         bool $isFlag = false,
-        bool $forceTaskConfigValue = false)
-    {
-        return $this->helper->getTaskConfigValue($this->taskName, $section, $field, $defaultValue, $isFlag,
-            $forceTaskConfigValue);
+        bool $forceTaskConfigValue = false
+    ) {
+        return $this->helper->getTaskConfigValue(
+            $this->taskName,
+            $section,
+            $field,
+            $defaultValue,
+            $isFlag,
+            $forceTaskConfigValue
+        );
     }
 
     /**
@@ -651,8 +725,8 @@ abstract class Base
     protected function getSummaryInformation(): array
     {
         return [
-            new Record(LogLevel::INFO, sprintf(__('Task Name: %s'), $this->taskName)),
-            new Record(LogLevel::INFO, sprintf(__('Task Id: %s'), $this->taskId))
+            new Record(LogLevel::INFO, sprintf(__('Task Name: %s')->render(), $this->taskName)),
+            new Record(LogLevel::INFO, sprintf(__('Task Id: %s')->render(), $this->taskId))
         ];
     }
 
@@ -669,8 +743,8 @@ abstract class Base
         string $field,
         $defaultValue = null,
         bool $isFlag = false,
-        bool $forceTaskConfigValue = true)
-    {
+        bool $forceTaskConfigValue = true
+    ) {
         return $this->getConfigValue('settings', $field, $defaultValue, $isFlag, $forceTaskConfigValue);
     }
 
@@ -694,9 +768,9 @@ abstract class Base
      */
     protected function isProhibitSummarySending(string $type): bool
     {
-        return array_key_exists($type, $this->prohibitSummarySending) ? $this->prohibitSummarySending[ $type ] :
-            (array_key_exists(static::SUMMARY_TYPE_ALL, $this->prohibitSummarySending) &&
-                $this->prohibitSummarySending[ static::SUMMARY_TYPE_ALL ]);
+        return array_key_exists($type, $this->prohibitSummarySending) ? $this->prohibitSummarySending[$type] :
+            (array_key_exists(static::SUMMARY_TYPE_ALL, $this->prohibitSummarySending)
+                && $this->prohibitSummarySending[static::SUMMARY_TYPE_ALL]);
     }
 
     /**
@@ -705,9 +779,9 @@ abstract class Base
      */
     public function setProhibitSummarySending(
         string $type = self::SUMMARY_TYPE_ALL,
-        bool $prohibitSummarySending = true)
-    {
-        $this->prohibitSummarySending[ $type ] = $prohibitSummarySending;
+        bool $prohibitSummarySending = true
+    ) {
+        $this->prohibitSummarySending[$type] = $prohibitSummarySending;
     }
 
     /**
@@ -748,13 +822,16 @@ abstract class Base
     protected function getCurrentMemoryUsage(): float
     {
         if (is_callable('shell_exec') && false === stripos(ini_get('disable_functions'), 'shell_exec')) {
-            $memoryUsages =
-                shell_exec(sprintf("cat /proc/%d/status 2>/dev/null | grep -E '^(VmRSS|VmSwap)' | awk '{print $2}' | xargs",
-                    getmypid()));
+            $memoryUsages = shell_exec(
+                sprintf(
+                    "cat /proc/%d/status 2>/dev/null | grep -E '^(VmRSS|VmSwap)' | awk '{print $2}' | xargs",
+                    getmypid()
+                )
+            );
 
             if (preg_match_all('/[0-9]+/', $memoryUsages, $matches)) {
                 if (array_key_exists(0, $matches)) {
-                    $memories = array_map('intval', $matches[ 0 ]);
+                    $memories = array_map('intval', $matches[0]);
 
                     return round(array_sum($memories) / 1024);
                 }

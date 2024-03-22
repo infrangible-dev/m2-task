@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Console\Command;
 
 use Infrangible\Core\Console\Command\Command;
@@ -8,7 +10,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 abstract class Task
@@ -28,8 +30,9 @@ abstract class Task
     protected function getCommandDefinition(): array
     {
         return [
-            new InputOption('store_code', null, InputOption::VALUE_REQUIRED, 'Code of the store to run import for',
-                'admin'),
+            new InputOption(
+                'store_code', null, InputOption::VALUE_REQUIRED, 'Code of the store to run import for', 'admin'
+            ),
             new InputOption('id', null, InputOption::VALUE_OPTIONAL, 'Id of the task'),
             new InputOption('log_level', null, InputOption::VALUE_OPTIONAL, 'Log level'),
             new InputOption('console', 'c', InputOption::VALUE_NONE, 'Log on the console'),

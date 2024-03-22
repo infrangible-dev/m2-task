@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -9,7 +11,7 @@ use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Data
@@ -46,34 +48,38 @@ class Data
         string $field,
         $defaultValue = null,
         bool $isFlag = false,
-        bool $forceTaskConfigValue = false)
-    {
+        bool $forceTaskConfigValue = false
+    ) {
         $storeId = $this->storeManager->getStore()->getId();
         $value = null;
 
-        $overwrite = ! empty($taskName) &&
-            $this->scopeConfig->isSetFlag('task_' . $taskName . '/' . $section . '/overwrite_task_general', 'store',
-                $storeId);
+        $overwrite = !empty($taskName)
+            && $this->scopeConfig->isSetFlag(
+                'task_'.$taskName.'/'.$section.'/overwrite_task_general',
+                'store',
+                $storeId
+            );
 
         $forceTaskConfigValue =
-            $forceTaskConfigValue || ! in_array($section, ['general', 'logging', 'summary_success', 'summary_error']);
+            $forceTaskConfigValue || !in_array($section, ['general', 'logging', 'summary_success', 'summary_error']);
 
         if ($overwrite || $forceTaskConfigValue) {
-            $value =
-                $this->scopeConfig->getValue('task_' . $taskName . '/' . $section . '/' . $field, 'store', $storeId);
+            $value = $this->scopeConfig->getValue('task_'.$taskName.'/'.$section.'/'.$field, 'store', $storeId);
 
-            if ($isFlag === true && ! is_null($value)) {
-                $value = $this->scopeConfig->isSetFlag('task_' . $taskName . '/' . $section . '/' . $field, 'store',
-                    $storeId);
+            if ($isFlag === true && !is_null($value)) {
+                $value = $this->scopeConfig->isSetFlag(
+                    'task_'.$taskName.'/'.$section.'/'.$field,
+                    'store',
+                    $storeId
+                );
             }
         }
 
         if (is_null($value)) {
-            $value = $this->scopeConfig->getValue('task_general' . '/' . $section . '/' . $field, 'store', $storeId);
+            $value = $this->scopeConfig->getValue('task_general'.'/'.$section.'/'.$field, 'store', $storeId);
 
-            if ($isFlag === true && ! is_null($value)) {
-                $value =
-                    $this->scopeConfig->isSetFlag('task_general' . '/' . $section . '/' . $field, 'store', $storeId);
+            if ($isFlag === true && !is_null($value)) {
+                $value = $this->scopeConfig->isSetFlag('task_general'.'/'.$section.'/'.$field, 'store', $storeId);
             }
         }
 

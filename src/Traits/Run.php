@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Traits;
 
 /**
@@ -54,7 +56,7 @@ trait Run
      */
     protected function getTitle(): string
     {
-        return __('Tasks');
+        return __('Tasks')->render();
     }
 
     /**

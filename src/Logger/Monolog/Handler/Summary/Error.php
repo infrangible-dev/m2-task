@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog\Handler\Summary;
 
 use Infrangible\Core\Helper\Registry;
@@ -44,7 +46,7 @@ class Error
      */
     public function isHandling(array $record): bool
     {
-        if ( ! $this->initialize()) {
+        if (!$this->initialize()) {
             return false;
         }
 
@@ -57,8 +59,8 @@ class Error
             return false;
         }
 
-        return array_key_exists('level', $record) &&
-            $record[ 'level' ] >= ($this->taskLogWarnAsError ? Logger::WARNING : Logger::ERROR);
+        return array_key_exists('level', $record)
+            && $record['level'] >= ($this->taskLogWarnAsError ? Logger::WARNING : Logger::ERROR);
     }
 
     /**
@@ -66,7 +68,7 @@ class Error
      */
     protected function initialize(): bool
     {
-        if ( ! $this->initialized) {
+        if (!$this->initialized) {
             $this->taskLogWarnAsError = $this->registryHelper->registry('current_task_log_warn_as_error');
 
             $this->initialized = true;

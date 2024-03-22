@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog;
 
 use Infrangible\Core\Helper\Instances;
@@ -51,16 +53,16 @@ abstract class AbstractLog
 
         $taskKey = md5(json_encode([$taskName, $taskId]));
 
-        if ( ! array_key_exists($taskKey, $this->taskHandlers)) {
+        if (!array_key_exists($taskKey, $this->taskHandlers)) {
             /** @var AbstractHandler $handler */
             $handler = $this->instanceHelper->getInstance($this->getHandlerClass());
 
             $this->pushHandler($handler);
 
-            $this->taskHandlers[ $taskKey ] = $handler;
+            $this->taskHandlers[$taskKey] = $handler;
         }
 
-        return $this->taskHandlers[ $taskKey ];
+        return $this->taskHandlers[$taskKey];
     }
 
     /**

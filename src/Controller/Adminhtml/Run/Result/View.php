@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Controller\Adminhtml\Run\Result;
 
 use Exception;
@@ -10,7 +12,7 @@ use Magento\Framework\View\Result\Page;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class View
@@ -23,7 +25,7 @@ class View
      */
     protected function getObjectNotFoundMessage(): string
     {
-        return __('Could not find run!');
+        return __('Could not find run!')->render();
     }
 
     /**
@@ -55,7 +57,7 @@ class View
 
         $this->_addContent($block);
 
-        $this->finishAction(__('View Log'));
+        $this->finishAction(__('View Log')->render());
 
         return $this->_view->getPage();
     }

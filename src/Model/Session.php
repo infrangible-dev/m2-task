@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Model;
 
 use Infrangible\Task\Model\Session\Storage;

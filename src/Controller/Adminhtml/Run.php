@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Controller\Adminhtml;
 
 use Exception;
@@ -22,7 +24,7 @@ use Magento\Store\Model\App\EmulationFactory;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 abstract class Run
@@ -75,8 +77,8 @@ abstract class Run
         \Magento\Backend\Model\Auth\Session $authSession,
         EmulationFactory $appEmulationFactory,
         ResolverInterface $localeResolver,
-        TranslateInterface $translate)
-    {
+        TranslateInterface $translate
+    ) {
         parent::__construct($context);
 
         $this->storeHelper = $storeHelper;
@@ -109,7 +111,7 @@ abstract class Run
         if ($this->task === null) {
             $this->task = $this->instanceHelper->getInstance($this->getClassName());
 
-            if ( ! ($this->task instanceof Base)) {
+            if (!($this->task instanceof Base)) {
                 throw new Exception(sprintf('Task must extend %s', Base::class));
             }
         }
@@ -138,10 +140,10 @@ abstract class Run
             return $resultRedirect;
         }
 
-        $isAllowed = $this->_authorization->isAllowed('Infrangible_Task::infrangible_task') &&
-            $this->_authorization->isAllowed($this->getTaskResourceId());
+        $isAllowed = $this->_authorization->isAllowed('Infrangible_Task::infrangible_task')
+            && $this->_authorization->isAllowed($this->getTaskResourceId());
 
-        if ( ! $isAllowed) {
+        if (!$isAllowed) {
             $this->taskSession->setData('task_error_reason', __('No right to execute task!'));
 
             $resultRedirect->setPath('infrangible_task/run/error');
