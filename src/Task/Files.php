@@ -129,12 +129,13 @@ abstract class Files
     /**
      * @param string $importedFile
      * @param bool   $result
+     * @param bool   $keepFile
      *
      * @return void
      * @throws NoSuchEntityException
      * @throws Exception
      */
-    protected function archiveImportFile(string $importedFile, bool $result): void
+    protected function archiveImportFile(string $importedFile, bool $result, bool $keepFile = false): void
     {
         $archivePath = $this->getArchivePath();
         $errorPath = $this->getErrorPath();
@@ -163,7 +164,7 @@ abstract class Files
             )
         );
 
-        if (!$this->isTest()) {
+        if (!$this->isTest() && !$keepFile) {
             if (!rename($importedFile, $importedFileArchiveFileName)) {
                 throw new Exception(
                     sprintf(
@@ -177,7 +178,7 @@ abstract class Files
             if (!copy($importedFile, $importedFileArchiveFileName)) {
                 throw new Exception(
                     sprintf(
-                        'Could not move import file: %s to archive file: %s',
+                        'Could not copy import file: %s to archive file: %s',
                         $importedFile,
                         $importedFileArchiveFileName
                     )
