@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Infrangible\Task\Console\Command\Script;
 
-use Exception;
 use Infrangible\Core\Console\Command\Script;
-use Infrangible\Task\Task\Base;
 use Magento\Framework\App\Area;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
@@ -19,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Task
+abstract class TaskList
     extends Script
 {
     /** @var \Infrangible\Task\Helper\Task */
@@ -30,9 +28,6 @@ abstract class Task
 
     /** @var RendererInterface */
     protected $renderer;
-
-    /** @var Base */
-    private $task;
 
     public function __construct(
         \Infrangible\Task\Helper\Task $taskHelper,
@@ -51,7 +46,7 @@ abstract class Task
      * @param OutputInterface $output
      *
      * @return int 0 if everything went fine, or an error code
-     * @throws Exception
+     * @throws \Exception
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -61,41 +56,24 @@ abstract class Task
 
         Phrase::setRenderer($this->renderer);
 
-        $this->taskHelper->launchTask(
-            $this->getTask(),
-            $storeCode,
-            $this->getTaskName(),
-            null,
-            $input->getOption('log_level'),
-            $input->getOption('console'),
-            $input->getOption('test')
-        );
+        foreach ($this->getTaskList() as $taskName => $className) {
+            $task = $this->taskHelper->getTask($className);
+
+            $this->taskHelper->launchTask(
+                $task,
+                $storeCode,
+                $taskName,
+                null,
+                $input->getOption('log_level'),
+                $input->getOption('console'),
+                $input->getOption('test')
+            );
+        }
 
         $this->appEmulation->stopEnvironmentEmulation();
 
         return 0;
     }
 
-    /**
-     * @return string
-     */
-    abstract protected function getTaskName(): string;
-
-    /**
-     * @return string
-     */
-    abstract protected function getClassName(): string;
-
-    /**
-     * @return Base
-     * @throws Exception
-     */
-    public function getTask(): Base
-    {
-        if ($this->task === null) {
-            $this->task = $this->taskHelper->getTask($this->getClassName());
-        }
-
-        return $this->task;
-    }
+    abstract protected function getTaskList(): array;
 }
