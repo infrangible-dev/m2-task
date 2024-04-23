@@ -43,10 +43,6 @@ class Task
             throw new \Exception('Please specify a task name!');
         }
 
-        if ($this->variables->isEmpty($taskId)) {
-            $taskId = date('Y-m-d_H-i-s');
-        }
-
         $task = $this->getTask($className);
 
         $this->launchTask($task, $storeCode, $taskName, $taskId, $logLevel, $console, $test);
@@ -64,6 +60,10 @@ class Task
         bool $console = false,
         bool $test = false
     ) {
+        if ($this->variables->isEmpty($taskId)) {
+            $taskId = date('Y-m-d_H-i-s');
+        }
+
         $task->init(
             $storeCode,
             $taskName,
