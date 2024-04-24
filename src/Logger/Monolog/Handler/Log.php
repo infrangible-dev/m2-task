@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog\Handler;
 
 use Exception;
@@ -13,7 +15,7 @@ use Psr\Log\LogLevel;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Log
@@ -60,7 +62,7 @@ class Log
      */
     public function isHandling(array $record): bool
     {
-        if ( ! $this->initialize()) {
+        if (!$this->initialize()) {
             return false;
         }
 
@@ -73,8 +75,8 @@ class Log
             return false;
         }
 
-        return parent::isHandling($record) && array_key_exists('level', $record) &&
-            $record[ 'level' ] < ($this->taskLogWarnAsError ? Logger::WARNING : Logger::ERROR);
+        return parent::isHandling($record) && array_key_exists('level', $record)
+            && $record['level'] < ($this->taskLogWarnAsError ? Logger::WARNING : Logger::ERROR);
     }
 
     /**
@@ -83,13 +85,13 @@ class Log
      */
     protected function initialize(): bool
     {
-        if ( ! $this->initialized) {
+        if (!$this->initialized) {
             $taskName = $this->registryHelper->registry('current_task_name');
             $taskId = $this->registryHelper->registry('current_task_id');
             $taskLogLevel = $this->registryHelper->registry('current_task_log_level');
             $this->taskLogWarnAsError = $this->registryHelper->registry('current_task_log_warn_as_error');
 
-            if ( ! empty($taskName) && ! empty($taskId) && ! empty($taskLogLevel)) {
+            if (!empty($taskName) && !empty($taskId) && !empty($taskLogLevel)) {
                 $this->url = implode('/', [
                     BP,
                     'var',

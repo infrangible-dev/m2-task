@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog\Handler\Summary;
 
 use Infrangible\Core\Helper\Registry;
@@ -8,7 +10,7 @@ use Psr\Log\LogLevel;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class All
@@ -42,7 +44,7 @@ class All
      */
     public function isHandling(array $record): bool
     {
-        if ( ! $this->initialize()) {
+        if (!$this->initialize()) {
             return false;
         }
 
@@ -63,10 +65,10 @@ class All
      */
     protected function initialize(): bool
     {
-        if ( ! $this->initialized) {
+        if (!$this->initialized) {
             $taskLogLevel = $this->registryHelper->registry('current_task_log_level');
 
-            if ( ! empty($taskLogLevel)) {
+            if (!empty($taskLogLevel)) {
                 switch (strtolower($taskLogLevel)) {
                     case 'off':
                         $level = Logger::EMERGENCY + 1;

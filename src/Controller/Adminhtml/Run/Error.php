@@ -1,38 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Controller\Adminhtml\Run;
 
+use FeWeDev\Base\Variables;
 use Infrangible\Task\Model\Session;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Block\Template;
 use Magento\Framework\Exception\LocalizedException;
-use Tofex\Help\Variables;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Error
     extends Action
 {
     /** @var Variables */
-    protected $variableHelper;
+    protected $variables;
 
     /** @var Session */
     protected $taskSession;
 
     /**
      * @param Context   $context
-     * @param Variables $variableHelper
+     * @param Variables $variables
      * @param Session   $taskSession
      */
-    public function __construct(Context $context, Variables $variableHelper, Session $taskSession)
+    public function __construct(Context $context, Variables $variables, Session $taskSession)
     {
         parent::__construct($context);
 
-        $this->variableHelper = $variableHelper;
+        $this->variables = $variables;
 
         $this->taskSession = $taskSession;
     }
@@ -49,7 +51,7 @@ class Error
     {
         $reason = $this->taskSession->getData('task_error_reason');
 
-        if ( ! $this->variableHelper->isEmpty($reason)) {
+        if (!$this->variables->isEmpty($reason)) {
             $this->_view->loadLayout(['default', 'infrangible_task_run_error']);
 
             /** @var Template|bool $errorBlock */
@@ -74,7 +76,8 @@ class Error
      */
     protected function _isAllowed(): bool
     {
-        return $this->_authorization->isAllowed('Infrangible_Task::infrangible_task_task_' .
-            $this->taskSession->getData('task_name'));
+        return $this->_authorization->isAllowed(
+            'Infrangible_Task::infrangible_task_task_'.$this->taskSession->getData('task_name')
+        );
     }
 }

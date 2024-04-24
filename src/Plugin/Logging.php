@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Plugin;
 
 use Infrangible\Log\Logger\Wrapper;
@@ -12,7 +14,7 @@ use Infrangible\Task\Logger\Monolog\Summary\Success;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Logging
@@ -49,8 +51,8 @@ class Logging
         ConsoleLog $taskConsoleLog,
         All $taskSummaryAll,
         Success $taskSummarySuccess,
-        Error $taskSummaryError)
-    {
+        Error $taskSummaryError
+    ) {
         $this->taskLog = $taskLog;
         $this->taskErrorLog = $taskErrorLog;
         $this->taskConsoleLog = $taskConsoleLog;
@@ -65,12 +67,12 @@ class Logging
     public function afterInitialize(Wrapper $wrapper)
     {
         $wrapper->addLoggers([
-            $this->taskLog,
-            $this->taskErrorLog,
-            $this->taskConsoleLog,
-            $this->taskSummaryAll,
-            $this->taskSummarySuccess,
-            $this->taskSummaryError
-        ]);
+                                 $this->taskLog,
+                                 $this->taskErrorLog,
+                                 $this->taskConsoleLog,
+                                 $this->taskSummaryAll,
+                                 $this->taskSummarySuccess,
+                                 $this->taskSummaryError
+                             ]);
     }
 }

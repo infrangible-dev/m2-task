@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Model\Config\Source;
 
 use Infrangible\Core\Helper\Database;
@@ -8,7 +10,7 @@ use Zend_Db_Expr;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class TaskName
@@ -30,8 +32,9 @@ class TaskName
      */
     protected function getTaskNames(): array
     {
-        $taskNameQuery = $this->databaseHelper->select($this->databaseHelper->getTableName('task_run'),
-            ['task_name' => new Zend_Db_Expr('distinct(task_name)')]);
+        $taskNameQuery = $this->databaseHelper->select(
+            $this->databaseHelper->getTableName('task_run'), ['task_name' => new Zend_Db_Expr('distinct(task_name)')]
+        );
 
         $taskNameQuery->order('task_name ASC');
 
@@ -69,7 +72,7 @@ class TaskName
         $result = [];
 
         foreach ($taskNames as $taskName) {
-            $result[ $taskName ] = $taskName;
+            $result[$taskName] = $taskName;
         }
 
         return $result;

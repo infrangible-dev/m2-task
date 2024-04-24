@@ -1,8 +1,12 @@
 <?php /** @noinspection PhpDeprecationInspection */
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Block\Adminhtml\Run;
 
 use Exception;
+use FeWeDev\Base\Arrays;
+use FeWeDev\Base\Variables;
 use Infrangible\BackendWidget\Helper\Session;
 use Infrangible\Core\Helper\Database;
 use Infrangible\Core\Helper\Registry;
@@ -17,12 +21,10 @@ use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use Magento\Framework\Validator\UniversalFactory;
-use Tofex\Help\Arrays;
-use Tofex\Help\Variables;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class Grid
@@ -35,8 +37,8 @@ class Grid
      * @param Context                                $context
      * @param Data                                   $backendHelper
      * @param Database                               $databaseHelper
-     * @param Arrays                                 $arrayHelper
-     * @param Variables                              $variableHelper
+     * @param Arrays                                 $arrays
+     * @param Variables                              $variables
      * @param Registry                               $registryHelper
      * @param \Infrangible\BackendWidget\Helper\Grid $gridHelper
      * @param Session                                $sessionHelper
@@ -49,18 +51,29 @@ class Grid
         Context $context,
         Data $backendHelper,
         Database $databaseHelper,
-        Arrays $arrayHelper,
-        Variables $variableHelper,
+        Arrays $arrays,
+        Variables $variables,
         Registry $registryHelper,
         \Infrangible\BackendWidget\Helper\Grid $gridHelper,
         Session $sessionHelper,
         UniversalFactory $universalFactory,
         Config $eavConfig,
         TaskName $taskName,
-        array $data = [])
-    {
-        parent::__construct($context, $backendHelper, $databaseHelper, $arrayHelper, $variableHelper, $registryHelper,
-            $gridHelper, $sessionHelper, $universalFactory, $eavConfig, $data);
+        array $data = []
+    ) {
+        parent::__construct(
+            $context,
+            $backendHelper,
+            $databaseHelper,
+            $arrays,
+            $variables,
+            $registryHelper,
+            $gridHelper,
+            $sessionHelper,
+            $universalFactory,
+            $eavConfig,
+            $data
+        );
 
         $this->taskName = $taskName;
     }
@@ -85,11 +98,14 @@ class Grid
     protected function prepareCollection(AbstractDb $collection)
     {
         if ($collection instanceof AbstractCollection) {
-            $collection->addExpressionFieldToSelect('status',
+            $collection->addExpressionFieldToSelect(
+                'status',
                 'IF({{0}} IS NULL,1,IF({{1}} IS NOT NULL OR {{2}} > 0,2,3))',
-                ['finish_at', 'finish_at', 'max_memory_usage']);
-            $collection->addExpressionFieldToSelect('duration', 'TIMESTAMPDIFF(SECOND, {{0}}, {{1}})',
-                ['start_at', 'finish_at']);
+                ['finish_at', 'finish_at', 'max_memory_usage']
+            );
+            $collection->addExpressionFieldToSelect(
+                'duration', 'TIMESTAMPDIFF(SECOND, {{0}}, {{1}})', ['start_at', 'finish_at']
+            );
         }
     }
 
@@ -99,22 +115,24 @@ class Grid
      */
     protected function prepareFields()
     {
-        $this->addTextColumn('store_code', __('Store Code'));
-        $this->addOptionsColumn('task_name', __('Task Name'), $this->taskName->toArray());
-        $this->addTextColumn('task_id', __('Task Id'));
-        $this->addTextColumn('process_id', __('Process Id'));
-        $this->addOptionsColumnWithFilterConditionAndFrame('status', __('Status'), [
+        $this->addTextColumn('store_code', __('Store Code')->render());
+        $this->addOptionsColumn('task_name', __('Task Name')->render(), $this->taskName->toArray());
+        $this->addTextColumn('task_id', __('Task Id')->render());
+        $this->addTextColumn('process_id', __('Process Id')->render());
+        $this->addOptionsColumnWithFilterConditionAndFrame(
+            'status', __('Status')->render(), [
             1 => __('Running'),
             2 => __('Finished'),
             3 => __('Broken')
-        ], [$this, 'filterStatus'], [$this, 'decorateStatus']);
-        $this->addYesNoColumn('success', __('Success'));
-        $this->addYesNoColumn('empty_run', __('Empty Run'));
-        $this->addYesNoColumn('test', __('Test'));
-        $this->addDatetimeColumn('start_at', __('Start Date'));
-        $this->addDatetimeColumn('finish_at', __('Finish Date'));
-        $this->addNumberColumnWithFilterCondition('duration', __('Duration'), [$this, 'filterDuration']);
-        $this->addNumberColumn('max_memory_usage', __('Memory'));
+        ], [$this, 'filterStatus'], [$this, 'decorateStatus']
+        );
+        $this->addYesNoColumn('success', __('Success')->render());
+        $this->addYesNoColumn('empty_run', __('Empty Run')->render());
+        $this->addYesNoColumn('test', __('Test')->render());
+        $this->addDatetimeColumn('start_at', __('Start Date')->render());
+        $this->addDatetimeColumn('finish_at', __('Finish Date')->render());
+        $this->addNumberColumnWithFilterCondition('duration', __('Duration')->render(), [$this, 'filterDuration']);
+        $this->addNumberColumn('max_memory_usage', __('Memory')->render());
     }
 
     /**
@@ -183,8 +201,8 @@ class Grid
         string $value,
         Run $row,
         /** @noinspection PhpUnusedParameterInspection */ Extended $column,
-        /** @noinspection PhpUnusedParameterInspection */ bool $isExport): string
-    {
+        /** @noinspection PhpUnusedParameterInspection */ bool $isExport
+    ): string {
         $class = '';
 
         switch ($row->getData('status')) {
@@ -199,6 +217,6 @@ class Grid
                 break;
         }
 
-        return '<span class="' . $class . '"><span>' . $value . '</span></span>';
+        return '<span class="'.$class.'"><span>'.$value.'</span></span>';
     }
 }

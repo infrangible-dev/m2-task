@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Cron;
 
 use Exception;
@@ -7,7 +9,7 @@ use Infrangible\Core\Helper\Instances;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 abstract class Base
@@ -56,7 +58,7 @@ abstract class Base
 
         $errorSummary = $this->getTask()->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ERROR);
 
-        if ( ! empty($errorSummary)) {
+        if (!empty($errorSummary)) {
             throw new Exception($errorSummary);
         }
 
@@ -88,7 +90,7 @@ abstract class Base
         if ($this->task === null) {
             $this->task = $this->instanceHelper->getInstance($this->getClassName());
 
-            if ( ! ($this->task instanceof \Infrangible\Task\Task\Base)) {
+            if (!($this->task instanceof \Infrangible\Task\Task\Base)) {
                 throw new Exception(sprintf('Task must extend %s', \Infrangible\Task\Task\Base::class));
             }
         }

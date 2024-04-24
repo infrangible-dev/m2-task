@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Logger\Monolog;
 
 use Exception;
@@ -11,7 +13,7 @@ use Monolog\Logger;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 abstract class AbstractLog
@@ -54,7 +56,7 @@ abstract class AbstractLog
 
         $taskKey = md5(json_encode([$taskName, $taskId]));
 
-        if ( ! array_key_exists($taskKey, $this->taskHandlers)) {
+        if (!array_key_exists($taskKey, $this->taskHandlers)) {
             /** @var AbstractHandler $handler */
             $handler = $this->instanceHelper->getInstance($this->getHandlerClass());
 
@@ -64,10 +66,10 @@ abstract class AbstractLog
 
             $this->pushHandler($handler);
 
-            $this->taskHandlers[ $taskKey ] = $handler;
+            $this->taskHandlers[$taskKey] = $handler;
         }
 
-        return $this->taskHandlers[ $taskKey ];
+        return $this->taskHandlers[$taskKey];
     }
 
     /**
@@ -88,8 +90,8 @@ abstract class AbstractLog
         int $level,
         string $message,
         array $context = [],
-        DateTimeImmutable $datetime = null): bool
-    {
+        DateTimeImmutable $datetime = null
+    ): bool {
         $this->prepareTaskHandler();
 
         return parent::addRecord($level, $message, $context);

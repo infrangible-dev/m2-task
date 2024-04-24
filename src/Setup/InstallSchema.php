@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Infrangible\Task\Setup;
 
 use Magento\Framework\DB\Ddl\Table;
@@ -10,7 +12,7 @@ use Zend_Db_Exception;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
 class InstallSchema
@@ -46,18 +48,34 @@ class InstallSchema
             'unsigned' => true,
             'nullable' => false,
             'primary'  => true
-        ], 'The identifier of the run');
+        ],                   'The identifier of the run');
         $runTable->addColumn('store_code', Table::TYPE_TEXT, 255, ['nullable' => false]);
         $runTable->addColumn('task_name', Table::TYPE_TEXT, 255, ['nullable' => false]);
         $runTable->addColumn('task_id', Table::TYPE_TEXT, 255, ['nullable' => false]);
-        $runTable->addColumn('process_id', Table::TYPE_INTEGER, 10,
-            ['unsigned' => true, 'nullable' => false, 'default' => 0]);
-        $runTable->addColumn('test', Table::TYPE_SMALLINT, 1,
-            ['unsigned' => true, 'nullable' => false, 'default' => 0]);
-        $runTable->addColumn('success', Table::TYPE_SMALLINT, 1,
-            ['unsigned' => true, 'nullable' => false, 'default' => 1]);
-        $runTable->addColumn('empty_run', Table::TYPE_SMALLINT, 1,
-            ['unsigned' => true, 'nullable' => false, 'default' => 0]);
+        $runTable->addColumn(
+            'process_id',
+            Table::TYPE_INTEGER,
+            10,
+            ['unsigned' => true, 'nullable' => false, 'default' => 0]
+        );
+        $runTable->addColumn(
+            'test',
+            Table::TYPE_SMALLINT,
+            1,
+            ['unsigned' => true, 'nullable' => false, 'default' => 0]
+        );
+        $runTable->addColumn(
+            'success',
+            Table::TYPE_SMALLINT,
+            1,
+            ['unsigned' => true, 'nullable' => false, 'default' => 1]
+        );
+        $runTable->addColumn(
+            'empty_run',
+            Table::TYPE_SMALLINT,
+            1,
+            ['unsigned' => true, 'nullable' => false, 'default' => 0]
+        );
         $runTable->addColumn('max_memory_usage', Table::TYPE_INTEGER, 10, ['nullable' => false]);
         $runTable->addColumn('start_at', Table::TYPE_DATETIME, null, ['nullable' => false]);
         $runTable->addColumn('finish_at', Table::TYPE_DATETIME, null, ['nullable' => true]);
