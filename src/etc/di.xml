@@ -2,7 +2,7 @@
 
 <!--
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
@@ -13,5 +13,8 @@
         <arguments>
             <argument name="storage" xsi:type="object">Infrangible\Task\Model\Session\Storage</argument>
         </arguments>
+    </type>
+    <type name="Magento\Config\Model\Config\Structure\Data">
+        <plugin name="infrangible_task" type="Infrangible\Task\Plugin\Config\Model\Config\Structure\Data"/>
     </type>
 </config>
