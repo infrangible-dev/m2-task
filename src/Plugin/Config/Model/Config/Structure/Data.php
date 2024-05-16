@@ -46,10 +46,32 @@ class Data
             $tab = $this->arrays->getValue($sectionData, 'tab');
 
             if ($tab === 'tasks') {
+                $sectionData = array_replace_recursive(
+                    $sectionData,
+                    $this->getTaskSection($sectionName, $sectionName === 'task_general')
+                );
+
+                $groupsData = $this->arrays->getValue($sectionData, 'children', []);
+
+                foreach ($groupsData as $groupsKey => $groupData) {
+                    $fieldsData = $this->arrays->getValue($groupData, 'children', []);
+
+                    usort($fieldsData, function (array $fieldData1, $fieldData2) {
+                        $sortOrder1 = $this->arrays->getValue($fieldData1, 'sortOrder', 0);
+                        $sortOrder2 = $this->arrays->getValue($fieldData2, 'sortOrder', 0);
+
+                        return $sortOrder1 > $sortOrder2 ? 1 : ($sortOrder1 < $sortOrder2 ? -1 : 0);
+                    });
+
+                    $groupsData[$groupsKey]['children'] = $fieldsData;
+                }
+
+                $sectionData['children'] = $groupsData;
+
                 $config = $this->arrays->addDeepValue(
                     $config,
                     ['config', 'system', 'sections', $sectionName],
-                    $this->getTaskSection($sectionName),
+                    $sectionData,
                     true,
                     true
                 );
@@ -59,26 +81,24 @@ class Data
         return [$config];
     }
 
-    public function getTaskSection(string $taskName): array
+    public function getTaskSection(string $taskName, bool $isGeneralTask): array
     {
         $groupsData = [
             'settings'        => [
                 'label'  => 'Settings',
                 'fields' => [
-                    'max_memory'           => ['label' => 'Max Memory', 'comment' => 'In MB'],
-                    'depends_on'           => [
-                        'label'   => 'Depends On',
-                        'comment' => 'Other tasks divided by semicolon'
-                    ],
+                    'max_memory'           => ['label' => 'Max Memory', 'comment' => 'In MB', 'sortOrder' => 10],
                     'wait_for_predecessor' => [
-                        'type'   => 'select',
-                        'label'  => 'Wait for Predecessor',
-                        'source' => Yesno::class
+                        'type'      => 'select',
+                        'label'     => 'Wait for Predecessor',
+                        'source'    => Yesno::class,
+                        'sortOrder' => 21
                     ],
                     'suppress_empty_mails' => [
-                        'type'   => 'select',
-                        'label'  => 'Suppress Empty Mails',
-                        'source' => Yesno::class
+                        'type'      => 'select',
+                        'label'     => 'Suppress Empty Mails',
+                        'source'    => Yesno::class,
+                        'sortOrder' => 30
                     ]
                 ]
             ],
@@ -169,6 +189,42 @@ class Data
             ]
         ];
 
+        if (!$isGeneralTask) {
+            $groupsData['settings']['fields']['depends_on'] = [
+                'label'     => 'Depends On',
+                'comment'   => 'Other tasks divided by semicolon',
+                'sortOrder' => 20
+            ];
+
+            foreach (['settings', 'logging', 'summary_success', 'summary_error'] as $groupName) {
+                $groupsData[$groupName]['fields']['overwrite_task_general'] = [
+                    'type'      => 'select',
+                    'label'     => 'Overwrite Task General',
+                    'source'    => Yesno::class,
+                    'sortOrder' => 5
+                ];
+
+                if ($groupName === 'settings') {
+                    foreach (['max_memory', 'wait_for_predecessor', 'suppress_empty_mails'] as $fieldName) {
+                        $groupsData[$groupName]['fields'][$fieldName]['depends'] = ['overwrite_task_general' => '1'];
+                    }
+                }
+
+                if ($groupName === 'logging') {
+                    foreach (['log_level', 'log_warn_as_error'] as $fieldName) {
+                        $groupsData[$groupName]['fields'][$fieldName]['depends'] = ['overwrite_task_general' => '1'];
+                    }
+                }
+
+                if ($groupName === 'summary_success' || $groupName === 'summary_error') {
+                    foreach (['send', 'sender', 'recipients', 'copy_recipients', 'blind_copy_recipients', 'subject'] as
+                        $fieldName) {
+                        $groupsData[$groupName]['fields'][$fieldName]['depends'] = ['overwrite_task_general' => '1'];
+                    }
+                }
+            }
+        }
+
         $groups = [];
 
         foreach ($groupsData as $groupName => $groupData) {
@@ -204,6 +260,7 @@ class Data
             $fieldComment = $this->arrays->getValue($fieldData, 'comment', '');
             $fieldSourceModel = $this->arrays->getValue($fieldData, 'source', '');
             $fieldDepends = $this->arrays->getValue($fieldData, 'depends', []);
+            $fieldSortOrder = $this->arrays->getValue($fieldData, 'sortOrder', count($fields) + 10);
 
             $fields[$fieldName] = $this->getTaskSectionField(
                 $taskName,
@@ -214,7 +271,7 @@ class Data
                 $fieldComment,
                 $fieldSourceModel,
                 $fieldDepends,
-                count($fields) + 10
+                $fieldSortOrder
             );
         }
 

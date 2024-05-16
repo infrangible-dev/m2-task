@@ -7,12 +7,12 @@ namespace Infrangible\Task\Task;
 use Exception;
 use FeWeDev\Base\Variables;
 use Infrangible\Core\Helper\Registry;
+use Infrangible\SimpleMail\Model\MailFactory;
 use Infrangible\Task\Helper\Data;
 use Infrangible\Task\Model\RunFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Mail\Template\TransportBuilder;
-use Magento\Store\Model\App\Emulation;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -34,37 +34,36 @@ abstract class Files
      * @param Registry                                         $registryHelper
      * @param Data                                             $helper
      * @param LoggerInterface                                  $logging
-     * @param Emulation                                        $appEmulation
      * @param DirectoryList                                    $directoryList
      * @param TransportBuilder                                 $transportBuilder
      * @param RunFactory                                       $runFactory
      * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
      * @param Variables                                        $variableHelper
      * @param \Infrangible\Core\Helper\Files                   $coreFilesHelper
+     * @param MailFactory                                      $mailFactory
      */
     public function __construct(
         \FeWeDev\Base\Files $files,
         Registry $registryHelper,
         Data $helper,
         LoggerInterface $logging,
-        Emulation $appEmulation,
         DirectoryList $directoryList,
         TransportBuilder $transportBuilder,
         RunFactory $runFactory,
         \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory,
         Variables $variableHelper,
-        \Infrangible\Core\Helper\Files $coreFilesHelper
+        \Infrangible\Core\Helper\Files $coreFilesHelper,
+        MailFactory $mailFactory
     ) {
         parent::__construct(
             $files,
             $registryHelper,
             $helper,
             $logging,
-            $appEmulation,
             $directoryList,
-            $transportBuilder,
             $runFactory,
-            $runResourceFactory
+            $runResourceFactory,
+            $mailFactory
         );
 
         $this->variables = $variableHelper;

@@ -7,22 +7,17 @@ namespace Infrangible\Task\Task;
 use Exception;
 use FeWeDev\Base\Files;
 use Infrangible\Core\Helper\Registry;
+use Infrangible\SimpleMail\Model\MailFactory;
 use Infrangible\Task\Helper\Data;
 use Infrangible\Task\Logger\ISummary;
 use Infrangible\Task\Logger\Monolog\Summary\AbstractSummary;
 use Infrangible\Task\Logger\Record;
 use Infrangible\Task\Model\RunFactory;
-use Magento\Framework\App\Area;
 use Magento\Framework\App\Bootstrap;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\AppInterface;
-use Magento\Framework\DataObject;
 use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Exception\MailException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Mail\Template\TransportBuilder;
-use Magento\Store\Model\App\Emulation;
-use Magento\Store\Model\Store;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
@@ -55,12 +50,6 @@ abstract class Base
     /** @var LoggerInterface */
     protected $logging;
 
-    /** @var TransportBuilder */
-    protected $transportBuilder;
-
-    /** @var Emulation */
-    protected $appEmulation;
-
     /** @var DirectoryList */
     protected $directoryList;
 
@@ -69,6 +58,9 @@ abstract class Base
 
     /** @var \Infrangible\Task\Model\ResourceModel\RunFactory */
     protected $runResourceFactory;
+
+    /** @var MailFactory */
+    protected $mailFactory;
 
     /** @var string */
     private $storeCode;
@@ -105,32 +97,29 @@ abstract class Base
      * @param Registry                                         $registryHelper
      * @param Data                                             $helper
      * @param LoggerInterface                                  $logging
-     * @param Emulation                                        $appEmulation
      * @param DirectoryList                                    $directoryList
-     * @param TransportBuilder                                 $transportBuilder
      * @param RunFactory                                       $runFactory
      * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
+     * @param MailFactory                                      $mailFactory
      */
     public function __construct(
         Files $files,
         Registry $registryHelper,
         Data $helper,
         LoggerInterface $logging,
-        Emulation $appEmulation,
         DirectoryList $directoryList,
-        TransportBuilder $transportBuilder,
         RunFactory $runFactory,
-        \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
+        \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory,
+        MailFactory $mailFactory
     ) {
         $this->files = $files;
         $this->registryHelper = $registryHelper;
         $this->helper = $helper;
         $this->logging = $logging;
-        $this->appEmulation = $appEmulation;
         $this->directoryList = $directoryList;
-        $this->transportBuilder = $transportBuilder;
         $this->runFactory = $runFactory;
         $this->runResourceFactory = $runResourceFactory;
+        $this->mailFactory = $mailFactory;
     }
 
     /**
@@ -482,7 +471,6 @@ abstract class Base
      *
      * @return void
      * @throws NoSuchEntityException
-     * @throws MailException
      */
     protected function sendSummary(string $type)
     {
@@ -526,29 +514,22 @@ abstract class Base
                             )
                         );
                     } elseif (!empty($recipients)) {
-                        $postObject = new DataObject();
-                        $postObject->setData(['subject' => $subject, 'content' => $content]);
+                        $mail = $this->mailFactory->create();
 
-                        $this->transportBuilder->setTemplateIdentifier('task_result_template');
-                        $this->transportBuilder->setTemplateOptions([
-                                                                        'area'  => Area::AREA_ADMINHTML,
-                                                                        'store' => Store::DEFAULT_STORE_ID
-                                                                    ]);
-                        $this->transportBuilder->setTemplateVars(['data' => $postObject]);
-                        $this->transportBuilder->setFromByScope(['email' => $senderEmail, 'name' => $senderName],
-                                                                $this->storeCode);
+                        $mail->setBody($content);
+                        $mail->addSender($senderEmail, $senderName);
 
                         $recipientEmails = explode(';', $recipients);
 
                         foreach ($recipientEmails as $recipientEmail) {
-                            $this->transportBuilder->addTo([trim($recipientEmail)]);
+                            $mail->addReceiver(trim($recipientEmail));
                         }
 
                         if (!empty($copyRecipients)) {
                             $copyRecipientEmails = explode(';', $copyRecipients);
 
                             foreach ($copyRecipientEmails as $recipientEmail) {
-                                $this->transportBuilder->addCc(trim($recipientEmail));
+                                $mail->addCopyReceiver(trim($recipientEmail));
                             }
                         }
 
@@ -556,7 +537,7 @@ abstract class Base
                             $blindCopyRecipientEmails = explode(';', $blindCopyRecipients);
 
                             foreach ($blindCopyRecipientEmails as $recipientEmail) {
-                                $this->transportBuilder->addBcc(trim($recipientEmail));
+                                $mail->addBlindCopyReceiver(trim($recipientEmail));
                             }
                         }
 
@@ -599,17 +580,7 @@ abstract class Base
                                 );
                             }
 
-                            $this->appEmulation->stopEnvironmentEmulation();
-
-                            $transport = $this->transportBuilder->getTransport();
-
-                            $transport->sendMessage();
-
-                            $this->appEmulation->startEnvironmentEmulation(
-                                $this->storeCode,
-                                Area::AREA_ADMINHTML,
-                                true
-                            );
+                            $mail->send();
                         } catch (Exception $exception) {
                             $this->logging->error(
                                 sprintf(
