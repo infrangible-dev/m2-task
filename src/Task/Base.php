@@ -516,6 +516,7 @@ abstract class Base
                     } elseif (!empty($recipients)) {
                         $mail = $this->mailFactory->create();
 
+                        $mail->setSubject($subject);
                         $mail->setBody($content);
                         $mail->addSender($senderEmail, $senderName);
 
@@ -579,6 +580,10 @@ abstract class Base
                                     )
                                 );
                             }
+
+                            $mail->addAdditionalHeader('x-task-name', $this->getTaskName());
+                            $mail->addAdditionalHeader('x-task-id', $this->getTaskId());
+                            $mail->addAdditionalHeader('x-summary-type', $type);
 
                             $mail->send();
                         } catch (Exception $exception) {

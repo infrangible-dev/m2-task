@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Infrangible\Task\Cron;
 
 use Exception;
-use Infrangible\Core\Helper\Instances;
+use Infrangible\Task\Helper\Task;
 
 /**
  * @author      Andreas Knollmann
@@ -14,36 +14,18 @@ use Infrangible\Core\Helper\Instances;
  */
 abstract class Base
 {
-    /** @var Instances */
-    protected $instanceHelper;
-
-    /** @var \Infrangible\Task\Task\Base */
-    private $task;
+    /** @var Task */
+    protected $taskHelper;
 
     /** @var bool */
     private $test = false;
 
     /**
-     * @param Instances $instanceHelper
+     * @param Task $taskHelper
      */
-    public function __construct(Instances $instanceHelper)
+    public function __construct(Task $taskHelper)
     {
-        $this->instanceHelper = $instanceHelper;
-    }
-
-    /**
-     * @return void
-     * @throws Exception
-     */
-    protected function init()
-    {
-        $taskName = $this->getTaskName();
-
-        if (empty($taskName)) {
-            throw new Exception(__('Please specify a task name!'));
-        }
-
-        $this->getTask()->init('admin', $taskName, date('Y-m-d_H-i-s'), null, false, $this->test);
+        $this->taskHelper = $taskHelper;
     }
 
     /**
@@ -52,17 +34,33 @@ abstract class Base
      */
     public function run(): string
     {
-        $this->init();
+        $taskName = $this->getTaskName();
 
-        $this->getTask()->launch();
+        if (empty($taskName)) {
+            throw new Exception(__('Please specify a task name!'));
+        }
 
-        $errorSummary = $this->getTask()->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ERROR);
+        $take = $this->taskHelper->getTask($this->getClassName());
 
-        if ( ! empty($errorSummary)) {
+        $this->taskHelper->launchTask(
+            $take,
+            'admin',
+            $taskName,
+            date('Y-m-d_H-i-s'),
+            null,
+            false,
+            $this->isTest()
+        );
+
+        $take->launch();
+
+        $errorSummary = $take->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ERROR);
+
+        if (!empty($errorSummary)) {
             throw new Exception($errorSummary);
         }
 
-        return $this->getTask()->getSummary();
+        return $take->getSummary();
     }
 
     /**
@@ -80,22 +78,11 @@ abstract class Base
     abstract protected function getClassName(): string;
 
     /**
-     * Returns the task to tun
-     *
-     * @return \Infrangible\Task\Task\Base
-     * @throws Exception
+     * @return bool
      */
-    public function getTask(): \Infrangible\Task\Task\Base
+    public function isTest(): bool
     {
-        if ($this->task === null) {
-            $this->task = $this->instanceHelper->getInstance($this->getClassName());
-
-            if ( ! ($this->task instanceof \Infrangible\Task\Task\Base)) {
-                throw new Exception(sprintf('Task must extend %s', \Infrangible\Task\Task\Base::class));
-            }
-        }
-
-        return $this->task;
+        return $this->test;
     }
 
     /**
@@ -107,9 +94,5 @@ abstract class Base
     protected function setTestMode(bool $test = true)
     {
         $this->test = $test;
-
-        if ($this->getTask() !== null) {
-            $this->getTask()->setTestMode($test);
-        }
     }
 }
