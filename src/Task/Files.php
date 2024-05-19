@@ -155,7 +155,7 @@ abstract class Files
             }
         }
 
-        $this->logging->info(
+        $this->logging->debug(
             sprintf(
                 'Moving import file: %s to archive file: %s',
                 $importedFile,

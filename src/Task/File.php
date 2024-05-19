@@ -43,7 +43,7 @@ abstract class File
     {
         $suppressEmptyMails = $this->isSuppressEmptyMails();
 
-        $importFiles = $this->determineImportFiles();
+        $importFiles = $this->determineImportFiles(false);
 
         $fileCounter = count($importFiles);
 
@@ -52,17 +52,22 @@ abstract class File
 
             for ($i = 0; $i < $fileCounter; $i++) {
                 if (array_key_exists($i, $importFiles)) {
-                    $this->logging->info(sprintf('Importing file %d/%d: %s', $i + 1, $fileCounter, $importFiles[ $i ]));
+                    $this->logging->debug(sprintf('Importing file %d/%d: %s', $i + 1, $fileCounter, $importFiles[$i]));
 
                     try {
-                        $result = $this->importFile($importFiles[ $i ]);
-                        $this->logging->debug(sprintf('Successfully finished import of file: %s', $importFiles[ $i ]));
-                        $this->importedFiles[ $importFiles[ $i ] ] = $result;
+                        $result = $this->importFile($importFiles[$i]);
+                        $this->logging->debug(sprintf('Successfully finished import of file: %s', $importFiles[$i]));
+                        $this->importedFiles[$importFiles[$i]] = $result;
                     } catch (Exception $exception) {
-                        $this->logging->debug(sprintf('Could not finish import of file: %s because; %s',
-                            $importFiles[ $i ], $exception->getMessage()));
+                        $this->logging->debug(
+                            sprintf(
+                                'Could not finish import of file: %s because; %s',
+                                $importFiles[$i],
+                                $exception->getMessage()
+                            )
+                        );
                         $this->logging->error($exception);
-                        $this->importedFiles[ $importFiles[ $i ] ] = false;
+                        $this->importedFiles[$importFiles[$i]] = false;
                     }
                 }
             }
@@ -81,6 +86,8 @@ abstract class File
      */
     protected function dismantle(bool $success)
     {
+        $this->logging->info(sprintf('Archiving %s imported file(s)', count($this->importedFiles)));
+
         foreach ($this->importedFiles as $importedFile => $result) {
             $this->archiveImportFile($importedFile, $result);
         }
@@ -92,16 +99,26 @@ abstract class File
      * @return string[]             a list of import files
      * @throws Exception
      */
-    protected function determineImportFiles(): array
+    protected function determineImportFiles(bool $quiet = true): array
     {
         if ($this->importFiles === null) {
             $path = $this->getImportPath();
+
+            if (!$quiet) {
+                $this->logging->info(sprintf('Checking for files to import in path: %s', $path));
+            }
 
             $this->importFiles = $this->coreFilesHelper->determineFilesFromFilePath($path);
 
             $filePattern = $this->getFilePattern();
 
-            if ( ! $this->variables->isEmpty($filePattern)) {
+            if (!$this->variables->isEmpty($filePattern)) {
+                if (!$quiet) {
+                    $this->logging->info(
+                        sprintf('Checking files to import in path: %s for pattern: %s', $path, $filePattern)
+                    );
+                }
+
                 $filteredImportFiles = [];
 
                 $filePattern = preg_replace('/\//', '\\\/', $filePattern);
@@ -114,6 +131,10 @@ abstract class File
 
                 $this->importFiles = $filteredImportFiles;
             }
+        }
+
+        if (!$quiet) {
+            $this->logging->info(sprintf('Found %s file(s) to import', count($this->importFiles)));
         }
 
         return $this->importFiles;
