@@ -11,7 +11,6 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
 use Magento\Store\Model\App\Emulation;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -74,7 +73,7 @@ abstract class Task extends Script
 
         $this->appEmulation->stopEnvironmentEmulation();
 
-        return $taskSuccess ? Command::SUCCESS : Command::FAILURE;
+        return $taskSuccess ? 0 : 1;
     }
 
     abstract protected function getTaskName(): string;
