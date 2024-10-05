@@ -9,6 +9,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
 use Magento\Store\Model\App\Emulation;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -17,8 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class TaskList
-    extends Script
+abstract class TaskList extends Script
 {
     /** @var \Infrangible\Task\Helper\Task */
     protected $taskHelper;
@@ -42,9 +42,6 @@ abstract class TaskList
     /**
      * Executes the current command.
      *
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @return int 0 if everything went fine, or an error code
      * @throws \Exception
      */
@@ -52,14 +49,20 @@ abstract class TaskList
     {
         $storeCode = $input->getOption('store_code');
 
-        $this->appEmulation->startEnvironmentEmulation($storeCode, Area::AREA_ADMINHTML, true);
+        $this->appEmulation->startEnvironmentEmulation(
+            $storeCode,
+            Area::AREA_ADMINHTML,
+            true
+        );
 
         Phrase::setRenderer($this->renderer);
+
+        $listSuccess = true;
 
         foreach ($this->getTaskList() as $taskName => $className) {
             $task = $this->taskHelper->getTask($className);
 
-            $this->taskHelper->launchTask(
+            $taskSuccess = $this->taskHelper->launchTask(
                 $task,
                 $storeCode,
                 $taskName,
@@ -68,11 +71,13 @@ abstract class TaskList
                 $input->getOption('console'),
                 $input->getOption('test')
             );
+
+            $listSuccess = $listSuccess && $taskSuccess;
         }
 
         $this->appEmulation->stopEnvironmentEmulation();
 
-        return 0;
+        return $listSuccess ? Command::SUCCESS : Command::FAILURE;
     }
 
     abstract protected function getTaskList(): array;

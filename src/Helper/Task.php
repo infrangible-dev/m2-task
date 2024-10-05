@@ -38,14 +38,14 @@ class Task
         string $logLevel = null,
         bool $console = false,
         bool $test = false
-    ) {
+    ): bool {
         if ($this->variables->isEmpty($taskName)) {
             throw new \Exception('Please specify a task name!');
         }
 
         $task = $this->getTask($className);
 
-        $this->launchTask($task, $storeCode, $taskName, $taskId, $logLevel, $console, $test);
+        return $this->launchTask($task, $storeCode, $taskName, $taskId, $logLevel, $console, $test);
     }
 
     /**
@@ -59,7 +59,7 @@ class Task
         string $logLevel = null,
         bool $console = false,
         bool $test = false
-    ) {
+    ): bool {
         if ($this->variables->isEmpty($taskId)) {
             $taskId = date('Y-m-d_H-i-s');
         }
@@ -73,7 +73,7 @@ class Task
             $test
         );
 
-        $task->launch();
+        return $task->launch();
     }
 
     /**

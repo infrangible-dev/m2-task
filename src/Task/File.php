@@ -12,8 +12,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class File
-    extends Files
+abstract class File extends Files
 {
     /** @var array */
     private $importFiles;
@@ -25,10 +24,9 @@ abstract class File
     private $emptyRun = true;
 
     /**
-     * @return void
      * @throws Exception
      */
-    protected function prepare()
+    protected function prepare(): void
     {
         $this->validatePaths();
     }
@@ -36,10 +34,9 @@ abstract class File
     /**
      * Load import files and executes for all these files the import method.
      *
-     * @return void
      * @throws Exception
      */
-    protected function runTask()
+    protected function runTask(): bool
     {
         $suppressEmptyMails = $this->isSuppressEmptyMails();
 
@@ -47,49 +44,78 @@ abstract class File
 
         $fileCounter = count($importFiles);
 
+        $success = true;
+
         if ($fileCounter) {
             $this->setEmptyRun(false);
 
             for ($i = 0; $i < $fileCounter; $i++) {
-                if (array_key_exists($i, $importFiles)) {
-                    $this->logging->debug(sprintf('Importing file %d/%d: %s', $i + 1, $fileCounter, $importFiles[$i]));
+                if (array_key_exists(
+                    $i,
+                    $importFiles
+                )) {
+                    $this->logging->debug(
+                        sprintf(
+                            'Importing file %d/%d: %s',
+                            $i + 1,
+                            $fileCounter,
+                            $importFiles[ $i ]
+                        )
+                    );
 
                     try {
-                        $result = $this->importFile($importFiles[$i]);
-                        $this->logging->debug(sprintf('Successfully finished import of file: %s', $importFiles[$i]));
-                        $this->importedFiles[$importFiles[$i]] = $result;
+                        $result = $this->importFile($importFiles[ $i ]);
+                        $this->logging->debug(
+                            sprintf(
+                                'Successfully finished import of file: %s',
+                                $importFiles[ $i ]
+                            )
+                        );
+                        $this->importedFiles[ $importFiles[ $i ] ] = $result;
                     } catch (Exception $exception) {
                         $this->logging->debug(
                             sprintf(
                                 'Could not finish import of file: %s because; %s',
-                                $importFiles[$i],
+                                $importFiles[ $i ],
                                 $exception->getMessage()
                             )
                         );
                         $this->logging->error($exception);
-                        $this->importedFiles[$importFiles[$i]] = false;
+                        $this->importedFiles[ $importFiles[ $i ] ] = false;
+
+                        $success = false;
                     }
                 }
             }
         } else {
-            $this->setProhibitSummarySending(self::SUMMARY_TYPE_ALL, $suppressEmptyMails);
+            $this->setProhibitSummarySending(
+                self::SUMMARY_TYPE_ALL,
+                $suppressEmptyMails
+            );
 
             $this->logging->info('Nothing to import');
         }
+
+        return $success;
     }
 
     /**
-     * @param bool $success
-     *
-     * @return void
      * @throws Exception
      */
-    protected function dismantle(bool $success)
+    protected function dismantle(bool $success): void
     {
-        $this->logging->info(sprintf('Archiving %s imported file(s)', count($this->importedFiles)));
+        $this->logging->info(
+            sprintf(
+                'Archiving %s imported file(s)',
+                count($this->importedFiles)
+            )
+        );
 
         foreach ($this->importedFiles as $importedFile => $result) {
-            $this->archiveImportFile($importedFile, $result);
+            $this->archiveImportFile(
+                $importedFile,
+                $result
+            );
         }
     }
 
@@ -104,27 +130,46 @@ abstract class File
         if ($this->importFiles === null) {
             $path = $this->getImportPath();
 
-            if (!$quiet) {
-                $this->logging->info(sprintf('Checking for files to import in path: %s', $path));
+            if (! $quiet) {
+                $this->logging->info(
+                    sprintf(
+                        'Checking for files to import in path: %s',
+                        $path
+                    )
+                );
             }
 
             $this->importFiles = $this->coreFilesHelper->determineFilesFromFilePath($path);
 
             $filePattern = $this->getFilePattern();
 
-            if (!$this->variables->isEmpty($filePattern)) {
-                if (!$quiet) {
+            if (! $this->variables->isEmpty($filePattern)) {
+                if (! $quiet) {
                     $this->logging->info(
-                        sprintf('Checking files to import in path: %s for pattern: %s', $path, $filePattern)
+                        sprintf(
+                            'Checking files to import in path: %s for pattern: %s',
+                            $path,
+                            $filePattern
+                        )
                     );
                 }
 
                 $filteredImportFiles = [];
 
-                $filePattern = preg_replace('/\//', '\\\/', $filePattern);
+                $filePattern = preg_replace(
+                    '/\//',
+                    '\\\/',
+                    $filePattern
+                );
 
                 foreach ($this->importFiles as $importFile) {
-                    if (preg_match(sprintf('/%s/', $filePattern), $importFile)) {
+                    if (preg_match(
+                        sprintf(
+                            '/%s/',
+                            $filePattern
+                        ),
+                        $importFile
+                    )) {
                         $filteredImportFiles[] = $importFile;
                     }
                 }
@@ -133,15 +178,19 @@ abstract class File
             }
         }
 
-        if (!$quiet) {
-            $this->logging->info(sprintf('Found %s file(s) to import', count($this->importFiles)));
+        if (! $quiet) {
+            $this->logging->info(
+                sprintf(
+                    'Found %s file(s) to import',
+                    count($this->importFiles)
+                )
+            );
         }
 
         return $this->importFiles;
     }
 
     /**
-     * @return bool
      * @throws Exception
      */
     protected function hasImportFiles(): bool
@@ -152,18 +201,11 @@ abstract class File
     }
 
     /**
-     * Executes the task for the given file.
-     *
-     * @param string $importFile the path to the import file
-     *
-     * @return bool
-     *
      * @throws Exception
      */
     abstract protected function importFile(string $importFile): bool;
 
     /**
-     * @return string
      * @throws NoSuchEntityException
      */
     protected function getFilePattern(): string
@@ -171,17 +213,11 @@ abstract class File
         return $this->getTaskSetting('file_pattern');
     }
 
-    /**
-     * @return bool
-     */
     public function isEmptyRun(): bool
     {
         return $this->emptyRun;
     }
 
-    /**
-     * @param bool $emptyRun
-     */
     public function setEmptyRun(bool $emptyRun): void
     {
         $this->emptyRun = $emptyRun;

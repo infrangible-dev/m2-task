@@ -23,11 +23,10 @@ use Psr\Log\LogLevel;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2023 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Base
-    implements AppInterface
+abstract class Base implements AppInterface
 {
     /** The Id of the Event Stream for all Log events from Level INFO to FATAL. */
     public const SUMMARY_TYPE_ALL = 'all';
@@ -92,16 +91,6 @@ abstract class Base
     /** @var array */
     private $registryValues = [];
 
-    /**
-     * @param Files                                            $files
-     * @param Registry                                         $registryHelper
-     * @param Data                                             $helper
-     * @param LoggerInterface                                  $logging
-     * @param DirectoryList                                    $directoryList
-     * @param RunFactory                                       $runFactory
-     * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
-     * @param MailFactory                                      $mailFactory
-     */
     public function __construct(
         Files $files,
         Registry $registryHelper,
@@ -122,37 +111,21 @@ abstract class Base
         $this->mailFactory = $mailFactory;
     }
 
-    /**
-     * @return void
-     */
-    abstract protected function prepare();
+    abstract protected function prepare(): void;
+
+    abstract protected function dismantle(bool $success): void;
 
     /**
-     * @param bool $success
-     *
-     * @return void
-     */
-    abstract protected function dismantle(bool $success);
-
-    /**
-     * @param string      $storeCode
-     * @param string      $taskName
-     * @param string      $taskId
-     * @param string|null $logLevel
-     * @param bool        $console
-     * @param bool        $test
-     *
-     * @return void
      * @throws NoSuchEntityException
      */
     public function init(
         string $storeCode,
         string $taskName,
         string $taskId,
-        string $logLevel = null,
+        ?string $logLevel = null,
         bool $console = false,
         bool $test = false
-    ) {
+    ): void {
         $this->storeRegistryValues();
 
         $this->storeCode = $storeCode;
@@ -162,14 +135,23 @@ abstract class Base
 
         $maxMemory = $this->getTaskSetting('max_memory');
 
-        if (!empty($maxMemory)) {
-            ini_set('memory_limit', sprintf('%dM', $maxMemory));
+        if (! empty($maxMemory)) {
+            ini_set(
+                'memory_limit',
+                sprintf(
+                    '%dM',
+                    $maxMemory
+                )
+            );
         }
 
         $list = $this->getTaskSetting('depends_on');
 
-        if (!empty($list)) {
-            $this->dependencyList = explode(';', $list);
+        if (! empty($list)) {
+            $this->dependencyList = explode(
+                ';',
+                $list
+            );
         }
 
         if ($this->getTaskSetting('wait_for_predecessor')) {
@@ -177,47 +159,85 @@ abstract class Base
         }
 
         if (empty($logLevel)) {
-            $logLevel =
-                (string) $this->helper->getTaskConfigValue($this->taskName, 'logging', 'log_level', LogLevel::INFO);
+            $logLevel = (string)$this->helper->getTaskConfigValue(
+                $this->taskName,
+                'logging',
+                'log_level',
+                LogLevel::INFO
+            );
         }
 
-        $logWarnAsError = (int) $this->helper->getTaskConfigValue($this->taskName, 'logging', 'log_warn_as_error', 1);
+        $logWarnAsError = (int)$this->helper->getTaskConfigValue(
+            $this->taskName,
+            'logging',
+            'log_warn_as_error',
+            1
+        );
 
-        $this->registryHelper->register('current_task_name', $taskName, false, true);
-        $this->registryHelper->register('current_task_id', $taskId, false, true);
-        $this->registryHelper->register('current_task_log_level', $logLevel, false, true);
-        $this->registryHelper->register('current_task_log_warn_as_error', $logWarnAsError, false, true);
-        $this->registryHelper->register('current_task_console', $console, false, true);
+        $this->registryHelper->register(
+            'current_task_name',
+            $taskName,
+            false,
+            true
+        );
+        $this->registryHelper->register(
+            'current_task_id',
+            $taskId,
+            false,
+            true
+        );
+        $this->registryHelper->register(
+            'current_task_log_level',
+            $logLevel,
+            false,
+            true
+        );
+        $this->registryHelper->register(
+            'current_task_log_warn_as_error',
+            $logWarnAsError,
+            false,
+            true
+        );
+        $this->registryHelper->register(
+            'current_task_console',
+            $console,
+            false,
+            true
+        );
     }
 
-    /**
-     * @return void
-     */
-    protected function storeRegistryValues()
+    protected function storeRegistryValues(): void
     {
-        $this->registryValues['current_task_name'] = $this->registryHelper->registry('current_task_name');
-        $this->registryValues['current_task_id'] = $this->registryHelper->registry('current_task_id');
-        $this->registryValues['current_task_log_level'] = $this->registryHelper->registry('current_task_log_level');
-        $this->registryValues['current_task_log_warn_as_error'] =
+        $this->registryValues[ 'current_task_name' ] = $this->registryHelper->registry('current_task_name');
+        $this->registryValues[ 'current_task_id' ] = $this->registryHelper->registry('current_task_id');
+        $this->registryValues[ 'current_task_log_level' ] = $this->registryHelper->registry('current_task_log_level');
+        $this->registryValues[ 'current_task_log_warn_as_error' ] =
             $this->registryHelper->registry('current_task_log_warn_as_error');
-        $this->registryValues['current_task_console'] = $this->registryHelper->registry('current_task_console');
+        $this->registryValues[ 'current_task_console' ] = $this->registryHelper->registry('current_task_console');
     }
 
     /**
-     * @return void
      * @throws Exception
      */
-    public function launch()
+    public function launch(): bool
     {
         $memoryUsageStart = $this->getCurrentMemoryUsage();
 
-        if (!$this->allowAdminStore && strcasecmp(trim($this->storeCode), 'admin') === 0) {
+        if (! $this->allowAdminStore && strcasecmp(
+                trim($this->storeCode),
+                'admin'
+            ) === 0) {
             throw new Exception(__('Task is not allowed to run with admin store.'));
         }
 
         $run = $this->runFactory->create();
 
-        $run->start($this->storeCode, $this->taskName, $this->taskId, $this->test);
+        $run->start(
+            $this->storeCode,
+            $this->taskName,
+            $this->taskId,
+            $this->test
+        );
 
         $this->runResourceFactory->create()->save($run);
 
@@ -226,15 +246,21 @@ abstract class Base
         $success = true;
 
         // add Current task to the dependency list
-        if (!$this->waitForPredecessor) {
+        if (! $this->waitForPredecessor) {
             $this->dependencyList[] = $this->taskName;
         }
 
         if ($this->checkDependencyTask($this->dependencyList)) {
             if ($this->waitForPredecessor) {
-                flock($this->getLockFile($this->taskName), LOCK_EX);
+                flock(
+                    $this->getLockFile($this->taskName),
+                    LOCK_EX
+                );
             } else {
-                flock($this->getLockFile($this->taskName), LOCK_EX | LOCK_NB);
+                flock(
+                    $this->getLockFile($this->taskName),
+                    LOCK_EX | LOCK_NB
+                );
             }
         } else {
             $success = false;
@@ -248,7 +274,10 @@ abstract class Base
             $this->prepare();
         } catch (Exception $exception) {
             $this->logging->error(
-                sprintf(__('Could not prepare task because: %s')->render(), $exception->getMessage())
+                sprintf(
+                    __('Could not prepare task because: %s')->render(),
+                    $exception->getMessage()
+                )
             );
             $this->logging->error($exception);
 
@@ -257,14 +286,27 @@ abstract class Base
 
         if ($success) {
             try {
-                $this->logging->info(sprintf(__('Running task: %s')->render(), $this->getTaskName()));
+                $this->logging->info(
+                    sprintf(
+                        __('Running task: %s')->render(),
+                        $this->getTaskName()
+                    )
+                );
 
-                $this->runTask();
+                $success = $this->runTask();
 
-                $this->logging->info(sprintf(__('Finished task: %s')->render(), $this->getTaskName()));
+                $this->logging->info(
+                    sprintf(
+                        __('Finished task: %s')->render(),
+                        $this->getTaskName()
+                    )
+                );
             } catch (Exception $exception) {
                 $this->logging->error(
-                    sprintf(__('Could not run task because: %s')->render(), $exception->getMessage())
+                    sprintf(
+                        __('Could not run task because: %s')->render(),
+                        $exception->getMessage()
+                    )
                 );
                 $this->logging->error($exception);
 
@@ -276,7 +318,10 @@ abstract class Base
             $this->dismantle($success);
         } catch (Exception $exception) {
             $this->logging->error(
-                sprintf(__('Could not dismantle task because: %s')->render(), $exception->getMessage())
+                sprintf(
+                    __('Could not dismantle task because: %s')->render(),
+                    $exception->getMessage()
+                )
             );
             $this->logging->error($exception);
         }
@@ -285,7 +330,10 @@ abstract class Base
             $this->sendSummary(static::SUMMARY_TYPE_SUCCESS);
         } catch (Exception $exception) {
             $this->logging->error(
-                sprintf(__('Could not send success summary because: %s')->render(), $exception->getMessage())
+                sprintf(
+                    __('Could not send success summary because: %s')->render(),
+                    $exception->getMessage()
+                )
             );
             $this->logging->error($exception);
         }
@@ -294,7 +342,10 @@ abstract class Base
             $this->sendSummary(static::SUMMARY_TYPE_ERROR);
         } catch (Exception $exception) {
             $this->logging->error(
-                sprintf(__('Could not send error summary because: %s')->render(), $exception->getMessage())
+                sprintf(
+                    __('Could not send error summary because: %s')->render(),
+                    $exception->getMessage()
+                )
             );
             $this->logging->error($exception);
         }
@@ -308,33 +359,59 @@ abstract class Base
 
         $memoryUsageEnd = $this->getCurrentMemoryUsage();
 
-        $this->logging->info(sprintf(__('Duration: %d minute(s), %d second(s)')->render(), $minutes, $seconds));
+        $this->logging->info(
+            sprintf(
+                __('Duration: %d minute(s), %d second(s)')->render(),
+                $minutes,
+                $seconds
+            )
+        );
         $this->logging->info(
             sprintf(
                 __('Max memory usage: %s MB')->render(),
-                number_format(floatval(bcsub(strval($memoryUsageEnd), strval($memoryUsageStart))), 0, ',', '.')
+                number_format(
+                    floatval(
+                        bcsub(
+                            strval($memoryUsageEnd),
+                            strval($memoryUsageStart)
+                        )
+                    ),
+                    0,
+                    ',',
+                    '.'
+                )
             )
         );
 
-        $run->finish(intval(bcsub(strval($memoryUsageEnd), strval($memoryUsageStart))), $success, $this->isEmptyRun());
+        $run->finish(
+            intval(
+                bcsub(
+                    strval($memoryUsageEnd),
+                    strval($memoryUsageStart)
+                )
+            ),
+            $success,
+            $this->isEmptyRun()
+        );
 
         $this->runResourceFactory->create()->save($run);
 
         $this->resetRegistryValues();
+
+        return $success;
     }
 
-    /**
-     * @return bool
-     */
     abstract public function isEmptyRun(): bool;
 
-    /**
-     * @return void
-     */
-    protected function resetRegistryValues()
+    protected function resetRegistryValues(): void
     {
         foreach ($this->registryValues as $key => $value) {
-            $this->registryHelper->register($key, $value, false, true);
+            $this->registryHelper->register(
+                $key,
+                $value,
+                false,
+                true
+            );
         }
     }
 
@@ -344,11 +421,6 @@ abstract class Base
      * Return values:
      * - true: exception has been handled, no additional action is needed
      * - false: exception has not been handled - pass the control to Bootstrap
-     *
-     * @param Bootstrap $bootstrap
-     * @param Exception $exception
-     *
-     * @return bool
      */
     public function catchException(Bootstrap $bootstrap, Exception $exception): bool
     {
@@ -358,8 +430,6 @@ abstract class Base
     }
 
     /**
-     * @param string $taskName
-     *
      * @return resource
      * @throws FileSystemException
      */
@@ -369,18 +439,26 @@ abstract class Base
 
         $this->files->createDirectory($tempPath);
 
-        $file = sprintf('%s/task_%s.lock', $tempPath, $taskName);
+        $file = sprintf(
+            '%s/task_%s.lock',
+            $tempPath,
+            $taskName
+        );
 
-        $lockFile = fopen($file, is_file($file) ? 'w' : 'x');
+        $lockFile = fopen(
+            $file,
+            is_file($file) ? 'w' : 'x'
+        );
 
-        fwrite($lockFile, date('c'));
+        fwrite(
+            $lockFile,
+            date('c')
+        );
 
         return $lockFile;
     }
 
     /**
-     * @param string $taskName
-     *
      * @return resource
      * @throws FileSystemException
      */
@@ -394,15 +472,16 @@ abstract class Base
     }
 
     /**
-     * @param string $taskName
-     *
      * @throws FileSystemException
      */
-    private function unLockFile(string $taskName)
+    private function unLockFile(string $taskName): void
     {
         $lockFile = $this->getLockFile($taskName);
 
-        flock($lockFile, LOCK_UN);
+        flock(
+            $lockFile,
+            LOCK_UN
+        );
 
         if ($lockFile) {
             fclose($lockFile);
@@ -412,17 +491,15 @@ abstract class Base
     }
 
     /**
-     * Function to check for dependencies
-     *
-     * @param array $dependencyList
-     *
-     * @return bool
      * @throws FileSystemException
      */
     private function checkDependencyTask(array $dependencyList): bool
     {
         foreach ($dependencyList as $taskName) {
-            if (!flock($this->createLockFile($taskName), LOCK_EX | LOCK_NB)) {
+            if (! flock(
+                $this->createLockFile($taskName),
+                LOCK_EX | LOCK_NB
+            )) {
                 $this->logging->error(
                     sprintf(
                         __('The task: %s is still running and block the process of this task: %s.')->render(),
@@ -433,7 +510,10 @@ abstract class Base
 
                 return false;
             } else {
-                flock($this->createLockFile($taskName), LOCK_UN);
+                flock(
+                    $this->createLockFile($taskName),
+                    LOCK_UN
+                );
 
                 if ($this->createLockFile($taskName)) {
                     fclose($this->createLockFile($taskName));
@@ -445,65 +525,94 @@ abstract class Base
     }
 
     /**
-     * @param string $storeCode
-     * @param string $taskName
-     * @param bool   $test
-     *
-     * @return array
      * @throws Exception
      */
-    public function launchFromAdmin(string $storeCode, string $taskName, bool $test = false)
+    public function launchFromAdmin(string $storeCode, string $taskName, bool $test = false): array
     {
-        $this->init($storeCode, $taskName, date('Y-m-d_H-i-s'), null, false, $test);
+        $this->init(
+            $storeCode,
+            $taskName,
+            date('Y-m-d_H-i-s'),
+            null,
+            false,
+            $test
+        );
 
         $this->launch();
 
-        return $this->getSummary(static::SUMMARY_TYPE_ALL, false, true);
+        return $this->getSummary(
+            static::SUMMARY_TYPE_ALL,
+            false,
+            true
+        );
     }
 
-    /**
-     * @return  void
-     */
-    abstract protected function runTask();
+    abstract protected function runTask(): bool;
 
     /**
-     * @param string $type
-     *
-     * @return void
      * @throws NoSuchEntityException
      */
-    protected function sendSummary(string $type)
+    protected function sendSummary(string $type): void
     {
-        $sendSummary = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'send', false, true);
+        $sendSummary = $this->helper->getTaskConfigValue(
+            $this->taskName,
+            'summary_' . $type,
+            'send',
+            false,
+            true
+        );
 
         if ($sendSummary) {
             $content = $this->getSummary($type);
 
-            if (!empty($content)) {
-                $content = $this->getSummary($type, true, true);
+            if (! empty($content)) {
+                $content = $this->getSummary(
+                    $type,
+                    true,
+                    true
+                );
 
-                $sender = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'sender', 'general');
-                $subject = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'subject');
-                $recipients = $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'recipients');
-                $copyRecipients =
-                    $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'copy_recipients');
-                $blindCopyRecipients =
-                    $this->helper->getTaskConfigValue($this->taskName, 'summary_'.$type, 'blind_copy_recipients');
+                $sender = $this->helper->getTaskConfigValue(
+                    $this->taskName,
+                    'summary_' . $type,
+                    'sender',
+                    'general'
+                );
+                $subject = $this->helper->getTaskConfigValue(
+                    $this->taskName,
+                    'summary_' . $type,
+                    'subject'
+                );
+                $recipients = $this->helper->getTaskConfigValue(
+                    $this->taskName,
+                    'summary_' . $type,
+                    'recipients'
+                );
+                $copyRecipients = $this->helper->getTaskConfigValue(
+                    $this->taskName,
+                    'summary_' . $type,
+                    'copy_recipients'
+                );
+                $blindCopyRecipients = $this->helper->getTaskConfigValue(
+                    $this->taskName,
+                    'summary_' . $type,
+                    'blind_copy_recipients'
+                );
 
-                $senderEmail = $this->helper->getStoreConfig('trans_email/ident_'.$sender.'/email');
-                $senderName = $this->helper->getStoreConfig('trans_email/ident_'.$sender.'/name');
+                $senderEmail = $this->helper->getStoreConfig('trans_email/ident_' . $sender . '/email');
+                $senderName = $this->helper->getStoreConfig('trans_email/ident_' . $sender . '/name');
 
                 if (empty($subject)) {
-                    $subject = __('Task: ').$this->taskName.' | '.__('Summary: ').$type;
+                    $subject = __('Task: ') . $this->taskName . ' | ' . __('Summary: ') . $type;
                 }
 
                 $storeDefaultTitle = $this->helper->getStoreConfig('design/head/default_title');
 
-                if (!empty($storeDefaultTitle)) {
-                    $subject = $storeDefaultTitle.' - '.$subject;
+                if (! empty($storeDefaultTitle)) {
+                    $subject = $storeDefaultTitle . ' - ' . $subject;
                 }
 
-                if (!empty($senderEmail) && !empty($senderName)) {
+                if (! empty($senderEmail) && ! empty($senderName)) {
                     if ($this->isProhibitSummarySending($type)) {
                         $this->logging->debug(
                             sprintf(
@@ -513,29 +622,41 @@ abstract class Base
                                 $recipients
                             )
                         );
-                    } elseif (!empty($recipients)) {
+                    } elseif (! empty($recipients)) {
                         $mail = $this->mailFactory->create();
 
                         $mail->setSubject($subject);
                         $mail->setBody($content);
-                        $mail->addSender($senderEmail, $senderName);
+                        $mail->addSender(
+                            $senderEmail,
+                            $senderName
+                        );
 
-                        $recipientEmails = explode(';', $recipients);
+                        $recipientEmails = explode(
+                            ';',
+                            $recipients
+                        );
 
                         foreach ($recipientEmails as $recipientEmail) {
                             $mail->addReceiver(trim($recipientEmail));
                         }
 
-                        if (!empty($copyRecipients)) {
-                            $copyRecipientEmails = explode(';', $copyRecipients);
+                        if (! empty($copyRecipients)) {
+                            $copyRecipientEmails = explode(
+                                ';',
+                                $copyRecipients
+                            );
 
                             foreach ($copyRecipientEmails as $recipientEmail) {
                                 $mail->addCopyReceiver(trim($recipientEmail));
                             }
                         }
 
-                        if (!empty($blindCopyRecipients)) {
-                            $blindCopyRecipientEmails = explode(';', $blindCopyRecipients);
+                        if (! empty($blindCopyRecipients)) {
+                            $blindCopyRecipientEmails = explode(
+                                ';',
+                                $blindCopyRecipients
+                            );
 
                             foreach ($blindCopyRecipientEmails as $recipientEmail) {
                                 $mail->addBlindCopyReceiver(trim($recipientEmail));
@@ -543,8 +664,8 @@ abstract class Base
                         }
 
                         try {
-                            if (!empty($copyRecipients)) {
-                                if (!empty($blindCopyRecipients)) {
+                            if (! empty($copyRecipients)) {
+                                if (! empty($blindCopyRecipients)) {
                                     $this->logging->debug(
                                         sprintf(
                                             __(
@@ -581,9 +702,18 @@ abstract class Base
                                 );
                             }
 
-                            $mail->addAdditionalHeader('x-task-name', $this->getTaskName());
-                            $mail->addAdditionalHeader('x-task-id', $this->getTaskId());
-                            $mail->addAdditionalHeader('x-summary-type', $type);
+                            $mail->addAdditionalHeader(
+                                'x-task-name',
+                                $this->getTaskName()
+                            );
+                            $mail->addAdditionalHeader(
+                                'x-task-id',
+                                $this->getTaskId()
+                            );
+                            $mail->addAdditionalHeader(
+                                'x-summary-type',
+                                $type
+                            );
 
                             $mail->send();
                         } catch (Exception $exception) {
@@ -617,19 +747,12 @@ abstract class Base
         }
     }
 
-    /**
-     * @return bool
-     */
     public function isTest(): bool
     {
         return $this->test === true;
     }
 
     /**
-     * @param string $type
-     * @param bool   $flat
-     * @param bool   $addSummaryInformation
-     *
      * @return string|array|null
      */
     public function getSummary(
@@ -640,7 +763,13 @@ abstract class Base
         $taskKey = md5(json_encode([$this->getTaskName(), $this->getTaskId()]));
 
         /** @var ISummary $summary */
-        $summary = $this->registryHelper->registry(sprintf('task_summary_%s_%s', $type, $taskKey));
+        $summary = $this->registryHelper->registry(
+            sprintf(
+                'task_summary_%s_%s',
+                $type,
+                $taskKey
+            )
+        );
 
         if ($summary) {
             $records = $summary->getRecords();
@@ -649,19 +778,22 @@ abstract class Base
 
                 if ($addSummaryInformation) {
                     foreach ($this->getSummaryInformation() as $record) {
-                        $flatSummary .= "\n".trim($record->getMessage());
+                        $flatSummary .= "\n" . trim($record->getMessage());
                     }
 
                     $flatSummary .= "\n";
                 }
 
                 foreach ($records as $record) {
-                    $flatSummary .= "\n".trim($record->getMessage());
+                    $flatSummary .= "\n" . trim($record->getMessage());
                 }
 
                 return trim($flatSummary);
             } else {
-                return $addSummaryInformation ? array_merge($this->getSummaryInformation(), $records) : $records;
+                return $addSummaryInformation ? array_merge(
+                    $this->getSummaryInformation(),
+                    $records
+                ) : $records;
             }
         }
 
@@ -669,13 +801,6 @@ abstract class Base
     }
 
     /**
-     * @param string $section
-     * @param string $field
-     * @param mixed  $defaultValue
-     * @param bool   $isFlag
-     * @param bool   $forceTaskConfigValue
-     *
-     * @return mixed
      * @throws NoSuchEntityException
      */
     public function getConfigValue(
@@ -701,18 +826,24 @@ abstract class Base
     protected function getSummaryInformation(): array
     {
         return [
-            new Record(LogLevel::INFO, sprintf(__('Task Name: %s')->render(), $this->taskName)),
-            new Record(LogLevel::INFO, sprintf(__('Task Id: %s')->render(), $this->taskId))
+            new Record(
+                LogLevel::INFO,
+                sprintf(
+                    __('Task Name: %s')->render(),
+                    $this->taskName
+                )
+            ),
+            new Record(
+                LogLevel::INFO,
+                sprintf(
+                    __('Task Id: %s')->render(),
+                    $this->taskId
+                )
+            )
         ];
     }
 
     /**
-     * @param string $field
-     * @param mixed  $defaultValue
-     * @param bool   $isFlag
-     * @param bool   $forceTaskConfigValue
-     *
-     * @return mixed
      * @throws NoSuchEntityException
      */
     protected function getTaskSetting(
@@ -721,83 +852,64 @@ abstract class Base
         bool $isFlag = false,
         bool $forceTaskConfigValue = true
     ) {
-        return $this->getConfigValue('settings', $field, $defaultValue, $isFlag, $forceTaskConfigValue);
+        return $this->getConfigValue(
+            'settings',
+            $field,
+            $defaultValue,
+            $isFlag,
+            $forceTaskConfigValue
+        );
     }
 
-    /**
-     * @param bool $test
-     *
-     * @return void
-     */
-    public function setTestMode(bool $test = true)
+    public function setTestMode(bool $test = true): void
     {
         $this->test = $test;
     }
 
-    /**
-     * Returns the current value of the send mail option.
-     *
-     * @param string $type
-     *
-     * @return bool <code>true</code> if a mail should be send,
-     *                  <code>false</code> otherwise.
-     */
     protected function isProhibitSummarySending(string $type): bool
     {
-        return array_key_exists($type, $this->prohibitSummarySending) ? $this->prohibitSummarySending[$type] :
-            (array_key_exists(static::SUMMARY_TYPE_ALL, $this->prohibitSummarySending)
-                && $this->prohibitSummarySending[static::SUMMARY_TYPE_ALL]);
+        return array_key_exists(
+            $type,
+            $this->prohibitSummarySending
+        ) ? $this->prohibitSummarySending[ $type ] : (array_key_exists(
+                static::SUMMARY_TYPE_ALL,
+                $this->prohibitSummarySending
+            ) && $this->prohibitSummarySending[ static::SUMMARY_TYPE_ALL ]);
     }
 
-    /**
-     * @param string $type
-     * @param bool   $prohibitSummarySending
-     */
     public function setProhibitSummarySending(
         string $type = self::SUMMARY_TYPE_ALL,
         bool $prohibitSummarySending = true
     ) {
-        $this->prohibitSummarySending[$type] = $prohibitSummarySending;
+        $this->prohibitSummarySending[ $type ] = $prohibitSummarySending;
     }
 
-    /**
-     * @return string
-     */
     public function getTaskName(): string
     {
         return $this->taskName;
     }
 
-    /**
-     * @return string
-     */
     public function getTaskId(): string
     {
         return $this->taskId;
     }
 
-    /**
-     * @return string
-     */
     public function getStoreCode(): string
     {
         return $this->storeCode;
     }
 
-    /**
-     * @param bool $allowAdminStore
-     */
     public function setAllowAdminStore(bool $allowAdminStore)
     {
         $this->allowAdminStore = $allowAdminStore;
     }
 
-    /**
-     * @return float
-     */
     protected function getCurrentMemoryUsage(): float
     {
-        if (is_callable('shell_exec') && false === stripos(ini_get('disable_functions'), 'shell_exec')) {
+        if (is_callable('shell_exec') && false === stripos(
+                ini_get('disable_functions'),
+                'shell_exec'
+            )) {
             $memoryUsages = shell_exec(
                 sprintf(
                     "cat /proc/%d/status 2>/dev/null | grep -E '^(VmRSS|VmSwap)' | awk '{print $2}' | xargs",
@@ -805,9 +917,19 @@ abstract class Base
                 )
             );
 
-            if (preg_match_all('/[0-9]+/', $memoryUsages, $matches)) {
-                if (array_key_exists(0, $matches)) {
-                    $memories = array_map('intval', $matches[0]);
+            if (preg_match_all(
+                '/[0-9]+/',
+                $memoryUsages,
+                $matches
+            )) {
+                if (array_key_exists(
+                    0,
+                    $matches
+                )) {
+                    $memories = array_map(
+                        'intval',
+                        $matches[ 0 ]
+                    );
 
                     return round(array_sum($memories) / 1024);
                 }
@@ -818,31 +940,43 @@ abstract class Base
     }
 
     /**
-     * @param Base $task
-     *
      * @throws Exception
      */
-    public function addSummaryFromTask(Base $task)
+    public function addSummaryFromTask(Base $task): void
     {
-        $this->addSummaryTypeFromTask($task, static::SUMMARY_TYPE_ALL);
-        $this->addSummaryTypeFromTask($task, static::SUMMARY_TYPE_SUCCESS);
-        $this->addSummaryTypeFromTask($task, static::SUMMARY_TYPE_ERROR);
+        $this->addSummaryTypeFromTask(
+            $task,
+            static::SUMMARY_TYPE_ALL
+        );
+        $this->addSummaryTypeFromTask(
+            $task,
+            static::SUMMARY_TYPE_SUCCESS
+        );
+        $this->addSummaryTypeFromTask(
+            $task,
+            static::SUMMARY_TYPE_ERROR
+        );
     }
 
     /**
-     * @param Base   $task
-     * @param string $type
-     *
      * @throws Exception
      */
-    protected function addSummaryTypeFromTask(Base $task, string $type)
+    protected function addSummaryTypeFromTask(Base $task, string $type): void
     {
         /** @var Record[] $taskSummaryRecords */
-        $taskSummaryRecords = $task->getSummary($type, false);
+        $taskSummaryRecords = $task->getSummary(
+            $type,
+            false
+        );
 
         if ($taskSummaryRecords) {
             /** @var AbstractSummary $summary */
-            $summary = $this->registryHelper->registry(sprintf('task_summary_%s', $type));
+            $summary = $this->registryHelper->registry(
+                sprintf(
+                    'task_summary_%s',
+                    $type
+                )
+            );
 
             if ($summary) {
                 foreach ($taskSummaryRecords as $taskSummaryRecord) {

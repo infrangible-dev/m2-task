@@ -29,19 +29,6 @@ abstract class Files
     /** @var \Infrangible\Core\Helper\Files */
     protected $coreFilesHelper;
 
-    /**
-     * @param \FeWeDev\Base\Files                              $files
-     * @param Registry                                         $registryHelper
-     * @param Data                                             $helper
-     * @param LoggerInterface                                  $logging
-     * @param DirectoryList                                    $directoryList
-     * @param TransportBuilder                                 $transportBuilder
-     * @param RunFactory                                       $runFactory
-     * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
-     * @param Variables                                        $variableHelper
-     * @param \Infrangible\Core\Helper\Files                   $coreFilesHelper
-     * @param MailFactory                                      $mailFactory
-     */
     public function __construct(
         \FeWeDev\Base\Files $files,
         Registry $registryHelper,
@@ -90,7 +77,6 @@ abstract class Files
     }
 
     /**
-     * @return string|null
      * @throws NoSuchEntityException
      */
     protected function getImportPath(): ?string
@@ -99,7 +85,6 @@ abstract class Files
     }
 
     /**
-     * @return string|null
      * @throws NoSuchEntityException
      */
     protected function getArchivePath(): ?string
@@ -108,7 +93,6 @@ abstract class Files
     }
 
     /**
-     * @return string|null
      * @throws NoSuchEntityException
      */
     protected function getErrorPath(): ?string
@@ -117,7 +101,6 @@ abstract class Files
     }
 
     /**
-     * @return bool
      * @throws NoSuchEntityException
      */
     protected function isSuppressEmptyMails(): bool
@@ -126,11 +109,6 @@ abstract class Files
     }
 
     /**
-     * @param string $importedFile
-     * @param bool   $result
-     * @param bool   $keepFile
-     *
-     * @return void
      * @throws NoSuchEntityException
      * @throws Exception
      */
@@ -186,10 +164,5 @@ abstract class Files
         }
     }
 
-    /**
-     * @param string $importFileName
-     *
-     * @return string
-     */
     abstract protected function getArchiveFileName(string $importFileName): string;
 }

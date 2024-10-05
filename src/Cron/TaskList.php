@@ -20,26 +20,24 @@ abstract class TaskList
     /** @var bool */
     private $test = false;
 
-    /**
-     * @param Task $taskHelper
-     */
     public function __construct(Task $taskHelper)
     {
         $this->taskHelper = $taskHelper;
     }
 
     /**
-     * @return string
      * @throws Exception
      */
     public function run(): string
     {
         $allSummaries = '';
 
+        $listSuccess = true;
+
         foreach ($this->getTaskList() as $taskName => $className) {
             $task = $this->taskHelper->getTask($className);
 
-            $this->taskHelper->launchTask(
+            $taskSuccess = $this->taskHelper->launchTask(
                 $task,
                 'admin',
                 $taskName,
@@ -49,13 +47,13 @@ abstract class TaskList
                 $this->isTest()
             );
 
-            $errorSummary = $task->getSummary(\Infrangible\Task\Task\Base::SUMMARY_TYPE_ERROR);
-
-            if (!empty($errorSummary)) {
-                throw new Exception($errorSummary);
-            }
+            $listSuccess = $listSuccess && $taskSuccess;
 
             $allSummaries .= $task->getSummary();
+        }
+
+        if (! $listSuccess) {
+            throw new Exception($allSummaries);
         }
 
         return $allSummaries;
@@ -63,21 +61,12 @@ abstract class TaskList
 
     abstract protected function getTaskList(): array;
 
-    /**
-     * @return bool
-     */
     public function isTest(): bool
     {
         return $this->test;
     }
 
-    /**
-     * @param bool $test
-     *
-     * @return void
-     * @throws Exception
-     */
-    protected function setTestMode(bool $test = true)
+    protected function setTestMode(bool $test = true): void
     {
         $this->test = $test;
     }

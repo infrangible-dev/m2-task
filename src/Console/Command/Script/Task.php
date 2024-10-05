@@ -11,6 +11,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
 use Magento\Store\Model\App\Emulation;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -19,8 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Task
-    extends Script
+abstract class Task extends Script
 {
     /** @var \Infrangible\Task\Helper\Task */
     protected $taskHelper;
@@ -47,9 +47,6 @@ abstract class Task
     /**
      * Executes the current command.
      *
-     * @param InputInterface  $input
-     * @param OutputInterface $output
-     *
      * @return int 0 if everything went fine, or an error code
      * @throws Exception
      */
@@ -57,11 +54,15 @@ abstract class Task
     {
         $storeCode = $input->getOption('store_code');
 
-        $this->appEmulation->startEnvironmentEmulation($storeCode, Area::AREA_ADMINHTML, true);
+        $this->appEmulation->startEnvironmentEmulation(
+            $storeCode,
+            Area::AREA_ADMINHTML,
+            true
+        );
 
         Phrase::setRenderer($this->renderer);
 
-        $this->taskHelper->launchTask(
+        $taskSuccess = $this->taskHelper->launchTask(
             $this->getTask(),
             $storeCode,
             $this->getTaskName(),
@@ -73,21 +74,14 @@ abstract class Task
 
         $this->appEmulation->stopEnvironmentEmulation();
 
-        return 0;
+        return $taskSuccess ? Command::SUCCESS : Command::FAILURE;
     }
 
-    /**
-     * @return string
-     */
     abstract protected function getTaskName(): string;
 
-    /**
-     * @return string
-     */
     abstract protected function getClassName(): string;
 
     /**
-     * @return Base
      * @throws Exception
      */
     public function getTask(): Base
