@@ -2,7 +2,7 @@
     "name": "infrangible/m2-task",
     "description": "Infrangible Magento 2 Task",
     "type": "magento2-module",
-    "version": "1.8.1",
+    "version": "1.9.0",
     "license": "MIT",
     "keywords": [
         "Magento"
@@ -21,7 +21,7 @@
         "fewedev/base": ">=1.3.0",
         "magento/framework": "~101.0.0|~102.0.0|~103.0.0",
         "monolog/monolog": "<2.7.0",
-        "infrangible/m2-backend-widget": "~2.0",
+        "infrangible/m2-backend-widget": "~2.4",
         "infrangible/m2-log": "~1.0",
         "infrangible/m2-simple-mail": "~1.1"
     },

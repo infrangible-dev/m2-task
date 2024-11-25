@@ -33,20 +33,6 @@ class Grid
     /** @var TaskName */
     protected $taskName;
 
-    /**
-     * @param Context                                $context
-     * @param Data                                   $backendHelper
-     * @param Database                               $databaseHelper
-     * @param Arrays                                 $arrays
-     * @param Variables                              $variables
-     * @param Registry                               $registryHelper
-     * @param \Infrangible\BackendWidget\Helper\Grid $gridHelper
-     * @param Session                                $sessionHelper
-     * @param UniversalFactory                       $universalFactory
-     * @param Config                                 $eavConfig
-     * @param TaskName                               $taskName
-     * @param array                                  $data
-     */
     public function __construct(
         Context $context,
         Data $backendHelper,
@@ -79,10 +65,9 @@ class Grid
     }
 
     /**
-     * @return void
      * @throws FileSystemException
      */
-    public function _construct()
+    public function _construct(): void
     {
         parent::_construct();
 
@@ -90,12 +75,7 @@ class Grid
         $this->setDefaultDir('DESC');
     }
 
-    /**
-     * @param AbstractDb $collection
-     *
-     * @return void
-     */
-    protected function prepareCollection(AbstractDb $collection)
+    protected function prepareCollection(AbstractDb $collection): void
     {
         if ($collection instanceof AbstractCollection) {
             $collection->addExpressionFieldToSelect(
@@ -112,10 +92,9 @@ class Grid
     }
 
     /**
-     * @return void
      * @throws Exception
      */
-    protected function prepareFields()
+    protected function prepareFields(): void
     {
         $this->addTextColumn('store_code', __('Store Code')->render());
         $this->addOptionsColumn('task_name', __('Task Name')->render(), $this->taskName->toArray());
@@ -143,14 +122,7 @@ class Grid
         return ['process_id', 'empty_run', 'test', 'finish_at', 'duration', 'max_memory_usage'];
     }
 
-    /**
-     * @param AbstractCollection $collection
-     * @param Column             $column
-     *
-     * @return void
-     * @noinspection PhpDeprecationInspection
-     */
-    protected function filterStatus(AbstractCollection $collection, Column $column)
+    protected function filterStatus(AbstractCollection $collection, Column $column): void
     {
         if ($this->getCollection()) {
             $field = $column->getData('filter_index') ? $column->getData('filter_index') : $column->getData('index');
@@ -165,14 +137,7 @@ class Grid
         }
     }
 
-    /**
-     * @param AbstractCollection $collection
-     * @param Column             $column
-     *
-     * @return void
-     * @noinspection PhpDeprecationInspection
-     */
-    protected function filterDuration(AbstractCollection $collection, Column $column)
+    protected function filterDuration(AbstractCollection $collection, Column $column): void
     {
         if ($this->getCollection()) {
             $field = $column->getData('filter_index') ? $column->getData('filter_index') : $column->getData('index');
@@ -187,16 +152,6 @@ class Grid
         }
     }
 
-    /**
-     * Decorate status column values
-     *
-     * @param string   $value
-     * @param Run      $row
-     * @param Extended $column
-     * @param bool     $isExport
-     *
-     * @return string
-     */
     public function decorateStatus(
         string $value,
         Run $row,
