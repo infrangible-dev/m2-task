@@ -12,7 +12,7 @@ use Infrangible\Task\Helper\Task;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Base
+abstract class TaskList
 {
     /** @var Task */
     protected $taskHelper;
@@ -30,34 +30,36 @@ abstract class Base
      */
     public function run(): string
     {
-        $taskName = $this->getTaskName();
+        $allSummaries = '';
 
-        if (empty($taskName)) {
-            throw new Exception(__('Please specify a task name!'));
+        $listSuccess = true;
+
+        foreach ($this->getTaskList() as $taskName => $className) {
+            $task = $this->taskHelper->getTask($className);
+
+            $taskSuccess = $this->taskHelper->launchTask(
+                $task,
+                'admin',
+                $taskName,
+                date('Y-m-d_H-i-s'),
+                null,
+                false,
+                $this->isTest()
+            );
+
+            $listSuccess = $listSuccess && $taskSuccess;
+
+            $allSummaries .= $task->getSummary();
         }
 
-        $task = $this->taskHelper->getTask($this->getClassName());
-
-        $taskSuccess = $this->taskHelper->launchTask(
-            $task,
-            'admin',
-            $taskName,
-            date('Y-m-d_H-i-s'),
-            null,
-            false,
-            $this->isTest()
-        );
-
-        if (! $taskSuccess) {
-            throw new Exception($task->getSummary());
+        if (! $listSuccess) {
+            throw new Exception($allSummaries);
         }
 
-        return $task->getSummary();
+        return $allSummaries;
     }
 
-    abstract protected function getTaskName(): string;
-
-    abstract protected function getClassName(): string;
+    abstract protected function getTaskList(): array;
 
     public function isTest(): bool
     {

@@ -7,12 +7,12 @@ namespace Infrangible\Task\Task;
 use Exception;
 use FeWeDev\Base\Variables;
 use Infrangible\Core\Helper\Registry;
+use Infrangible\SimpleMail\Model\MailFactory;
 use Infrangible\Task\Helper\Data;
 use Infrangible\Task\Model\RunFactory;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Mail\Template\TransportBuilder;
-use Magento\Store\Model\App\Emulation;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -29,42 +29,28 @@ abstract class Files
     /** @var \Infrangible\Core\Helper\Files */
     protected $coreFilesHelper;
 
-    /**
-     * @param \FeWeDev\Base\Files                              $files
-     * @param Registry                                         $registryHelper
-     * @param Data                                             $helper
-     * @param LoggerInterface                                  $logging
-     * @param Emulation                                        $appEmulation
-     * @param DirectoryList                                    $directoryList
-     * @param TransportBuilder                                 $transportBuilder
-     * @param RunFactory                                       $runFactory
-     * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
-     * @param Variables                                        $variableHelper
-     * @param \Infrangible\Core\Helper\Files                   $coreFilesHelper
-     */
     public function __construct(
         \FeWeDev\Base\Files $files,
         Registry $registryHelper,
         Data $helper,
         LoggerInterface $logging,
-        Emulation $appEmulation,
         DirectoryList $directoryList,
         TransportBuilder $transportBuilder,
         RunFactory $runFactory,
         \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory,
         Variables $variableHelper,
-        \Infrangible\Core\Helper\Files $coreFilesHelper
+        \Infrangible\Core\Helper\Files $coreFilesHelper,
+        MailFactory $mailFactory
     ) {
         parent::__construct(
             $files,
             $registryHelper,
             $helper,
             $logging,
-            $appEmulation,
             $directoryList,
-            $transportBuilder,
             $runFactory,
-            $runResourceFactory
+            $runResourceFactory,
+            $mailFactory
         );
 
         $this->variables = $variableHelper;
@@ -91,7 +77,6 @@ abstract class Files
     }
 
     /**
-     * @return string|null
      * @throws NoSuchEntityException
      */
     protected function getImportPath(): ?string
@@ -100,7 +85,6 @@ abstract class Files
     }
 
     /**
-     * @return string|null
      * @throws NoSuchEntityException
      */
     protected function getArchivePath(): ?string
@@ -109,7 +93,6 @@ abstract class Files
     }
 
     /**
-     * @return string|null
      * @throws NoSuchEntityException
      */
     protected function getErrorPath(): ?string
@@ -118,7 +101,6 @@ abstract class Files
     }
 
     /**
-     * @return bool
      * @throws NoSuchEntityException
      */
     protected function isSuppressEmptyMails(): bool
@@ -127,11 +109,6 @@ abstract class Files
     }
 
     /**
-     * @param string $importedFile
-     * @param bool   $result
-     * @param bool   $keepFile
-     *
-     * @return void
      * @throws NoSuchEntityException
      * @throws Exception
      */
@@ -148,7 +125,7 @@ abstract class Files
             true
         );
 
-        if (!file_exists($importedFileArchivePath)) {
+        if (! file_exists($importedFileArchivePath)) {
             if (mkdir($importedFileArchivePath, 0777, true)) {
                 $this->logging->info(sprintf('Archive path %s successful created', $importedFileArchivePath));
             } else {
@@ -156,7 +133,7 @@ abstract class Files
             }
         }
 
-        $this->logging->info(
+        $this->logging->debug(
             sprintf(
                 'Moving import file: %s to archive file: %s',
                 $importedFile,
@@ -164,8 +141,8 @@ abstract class Files
             )
         );
 
-        if (!$this->isTest() && !$keepFile) {
-            if (!rename($importedFile, $importedFileArchiveFileName)) {
+        if (! $this->isTest() && ! $keepFile) {
+            if (! rename($importedFile, $importedFileArchiveFileName)) {
                 throw new Exception(
                     sprintf(
                         'Could not move import file: %s to archive file: %s',
@@ -175,7 +152,7 @@ abstract class Files
                 );
             }
         } else {
-            if (!copy($importedFile, $importedFileArchiveFileName)) {
+            if (! copy($importedFile, $importedFileArchiveFileName)) {
                 throw new Exception(
                     sprintf(
                         'Could not copy import file: %s to archive file: %s',
@@ -187,10 +164,5 @@ abstract class Files
         }
     }
 
-    /**
-     * @param string $importFileName
-     *
-     * @return string
-     */
     abstract protected function getArchiveFileName(string $importFileName): string;
 }
