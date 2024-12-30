@@ -32,7 +32,7 @@ abstract class Base extends Script
         );
     }
 
-    protected function prepareTask(\Infrangible\Task\Task\Base $task, InputInterface $input)
+    protected function prepareTask(\Infrangible\Task\Task\Base $task, InputInterface $input): void
     {
     }
 }
