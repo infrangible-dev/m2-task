@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Infrangible\Task\Console\Command\Script;
 
-use Infrangible\Core\Console\Command\Script;
 use Magento\Framework\App\Area;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
@@ -18,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class TaskList extends Script
+abstract class TaskList extends Base
 {
     /** @var \Infrangible\Task\Helper\Task */
     protected $taskHelper;
@@ -47,35 +46,42 @@ abstract class TaskList extends Script
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $storeCode = $input->getOption('store_code');
-
-        $this->appEmulation->startEnvironmentEmulation(
-            $storeCode,
-            Area::AREA_ADMINHTML,
-            true
-        );
-
-        Phrase::setRenderer($this->renderer);
+        $storeCodes = $this->getStoreCodes($input);
 
         $listSuccess = true;
 
-        foreach ($this->getTaskList() as $taskName => $className) {
-            $task = $this->taskHelper->getTask($className);
-
-            $taskSuccess = $this->taskHelper->launchTask(
-                $task,
+        foreach ($storeCodes as $storeCode) {
+            $this->appEmulation->startEnvironmentEmulation(
                 $storeCode,
-                $taskName,
-                null,
-                $input->getOption('log_level'),
-                $input->getOption('console'),
-                $input->getOption('test')
+                Area::AREA_ADMINHTML,
+                true
             );
 
-            $listSuccess = $listSuccess && $taskSuccess;
-        }
+            Phrase::setRenderer($this->renderer);
 
-        $this->appEmulation->stopEnvironmentEmulation();
+            foreach ($this->getTaskList() as $taskName => $className) {
+                $task = $this->taskHelper->getTask($className);
+
+                $this->prepareTask(
+                    $task,
+                    $input
+                );
+
+                $taskSuccess = $this->taskHelper->launchTask(
+                    $task,
+                    $storeCode,
+                    $taskName,
+                    null,
+                    $input->getOption('log_level'),
+                    $input->getOption('console'),
+                    $input->getOption('test')
+                );
+
+                $listSuccess = $listSuccess && $taskSuccess;
+            }
+
+            $this->appEmulation->stopEnvironmentEmulation();
+        }
 
         return $listSuccess ? Command::SUCCESS : Command::FAILURE;
     }

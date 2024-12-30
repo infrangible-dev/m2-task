@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Infrangible\Task\Console\Command\Script;
 
 use Exception;
-use Infrangible\Core\Console\Command\Script;
-use Infrangible\Task\Task\Base;
 use Magento\Framework\App\Area;
 use Magento\Framework\Phrase;
 use Magento\Framework\Phrase\RendererInterface;
@@ -20,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Task extends Script
+abstract class Task extends Base
 {
     /** @var \Infrangible\Task\Helper\Task */
     protected $taskHelper;
@@ -30,9 +28,6 @@ abstract class Task extends Script
 
     /** @var RendererInterface */
     protected $renderer;
-
-    /** @var Base */
-    private $task;
 
     public function __construct(
         \Infrangible\Task\Helper\Task $taskHelper,
@@ -52,27 +47,38 @@ abstract class Task extends Script
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $storeCode = $input->getOption('store_code');
+        $storeCodes = $this->getStoreCodes($input);
 
-        $this->appEmulation->startEnvironmentEmulation(
-            $storeCode,
-            Area::AREA_ADMINHTML,
-            true
-        );
+        $taskSuccess = true;
 
-        Phrase::setRenderer($this->renderer);
+        foreach ($storeCodes as $storeCode) {
+            $this->appEmulation->startEnvironmentEmulation(
+                $storeCode,
+                Area::AREA_ADMINHTML,
+                true
+            );
 
-        $taskSuccess = $this->taskHelper->launchTask(
-            $this->getTask(),
-            $storeCode,
-            $this->getTaskName(),
-            null,
-            $input->getOption('log_level'),
-            $input->getOption('console'),
-            $input->getOption('test')
-        );
+            Phrase::setRenderer($this->renderer);
 
-        $this->appEmulation->stopEnvironmentEmulation();
+            $task = $this->taskHelper->getTask($this->getClassName());
+
+            $this->prepareTask(
+                $task,
+                $input
+            );
+
+            $taskSuccess = $this->taskHelper->launchTask(
+                    $task,
+                    $storeCode,
+                    $this->getTaskName(),
+                    null,
+                    $input->getOption('log_level'),
+                    $input->getOption('console'),
+                    $input->getOption('test')
+                ) || $taskSuccess;
+
+            $this->appEmulation->stopEnvironmentEmulation();
+        }
 
         return $taskSuccess ? Command::SUCCESS : Command::FAILURE;
     }
@@ -80,16 +86,4 @@ abstract class Task extends Script
     abstract protected function getTaskName(): string;
 
     abstract protected function getClassName(): string;
-
-    /**
-     * @throws Exception
-     */
-    public function getTask(): Base
-    {
-        if ($this->task === null) {
-            $this->task = $this->taskHelper->getTask($this->getClassName());
-        }
-
-        return $this->task;
-    }
 }

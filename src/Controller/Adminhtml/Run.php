@@ -27,8 +27,7 @@ use Magento\Store\Model\App\EmulationFactory;
  * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-abstract class Run
-    extends Action
+abstract class Run extends Action
 {
     /** @var Stores */
     protected $storeHelper;
@@ -57,17 +56,6 @@ abstract class Run
     /** @var Base */
     private $task;
 
-    /**
-     * @param Context                             $context
-     * @param Stores                              $storeHelper
-     * @param Instances                           $instanceHelper
-     * @param Data                                $taskHelper
-     * @param Session                             $taskSession
-     * @param \Magento\Backend\Model\Auth\Session $authSession
-     * @param EmulationFactory                    $appEmulationFactory
-     * @param ResolverInterface                   $localeResolver
-     * @param TranslateInterface                  $translate
-     */
     public function __construct(
         Context $context,
         Stores $storeHelper,
@@ -92,18 +80,11 @@ abstract class Run
         $this->translate = $translate;
     }
 
-    /**
-     * @return string
-     */
     abstract protected function getTaskName(): string;
 
-    /**
-     * @return string
-     */
     abstract protected function getClassName(): string;
 
     /**
-     * @return Base
      * @throws Exception
      */
     public function getTask(): Base
@@ -111,8 +92,13 @@ abstract class Run
         if ($this->task === null) {
             $this->task = $this->instanceHelper->getInstance($this->getClassName());
 
-            if (!($this->task instanceof Base)) {
-                throw new Exception(sprintf('Task must extend %s', Base::class));
+            if (! ($this->task instanceof Base)) {
+                throw new Exception(
+                    sprintf(
+                        'Task must extend %s',
+                        Base::class
+                    )
+                );
             }
         }
 
@@ -130,21 +116,30 @@ abstract class Run
 
         $taskName = $this->getTaskName();
 
-        $this->taskSession->setData('task_name', $taskName);
+        $this->taskSession->setData(
+            'task_name',
+            $taskName
+        );
 
         if (empty($taskName)) {
-            $this->taskSession->setData('task_error_reason', __('Please specify a task name!'));
+            $this->taskSession->setData(
+                'task_error_reason',
+                __('Please specify a task name!')
+            );
 
             $resultRedirect->setPath('infrangible_task/run/error');
 
             return $resultRedirect;
         }
 
-        $isAllowed = $this->_authorization->isAllowed('Infrangible_Task::infrangible_task')
-            && $this->_authorization->isAllowed($this->getTaskResourceId());
+        $isAllowed = $this->_authorization->isAllowed('Infrangible_Task::infrangible_task') &&
+            $this->_authorization->isAllowed($this->getTaskResourceId());
 
-        if (!$isAllowed) {
-            $this->taskSession->setData('task_error_reason', __('No right to execute task!'));
+        if (! $isAllowed) {
+            $this->taskSession->setData(
+                'task_error_reason',
+                __('No right to execute task!')
+            );
 
             $resultRedirect->setPath('infrangible_task/run/error');
 
@@ -153,7 +148,10 @@ abstract class Run
 
         $task = $this->getTask();
 
-        $testMode = $this->getRequest()->getParam('test', false);
+        $testMode = $this->getRequest()->getParam(
+            'test',
+            false
+        );
 
         try {
             $storeCode = $this->getRequest()->getParam('store_code');
@@ -164,7 +162,10 @@ abstract class Run
 
             $storeId = $this->storeHelper->getStore($storeCode)->getId();
 
-            $this->appEmulation->startEnvironmentEmulation($storeId, Area::AREA_ADMINHTML);
+            $this->appEmulation->startEnvironmentEmulation(
+                $storeId,
+                Area::AREA_ADMINHTML
+            );
 
             $locale = null;
 
@@ -184,11 +185,22 @@ abstract class Run
                 $this->translate->loadData(Area::AREA_ADMINHTML);
             }
 
-            $taskResult = $task->launchFromAdmin($storeCode, $taskName, $testMode !== false);
+            $taskResult = $task->launchFromAdmin(
+                $storeCode,
+                $taskName,
+                $testMode !== false
+            );
 
             $this->appEmulation->stopEnvironmentEmulation();
 
-            $taskTitle = $this->taskHelper->getTaskConfigValue($taskName, 'data', 'title', null, false, true);
+            $taskTitle = $this->taskHelper->getTaskConfigValue(
+                $taskName,
+                'data',
+                'title',
+                null,
+                false,
+                true
+            );
 
             $this->_view->loadLayout(['default', 'infrangible_task_run_result']);
 
@@ -199,12 +211,21 @@ abstract class Run
                 throw new LocalizedException(__('Result block not found in layout'));
             }
 
-            $resultBlock->setData('title', __($taskTitle));
-            $resultBlock->setData('result', $taskResult);
+            $resultBlock->setData(
+                'title',
+                __($taskTitle)
+            );
+            $resultBlock->setData(
+                'result',
+                $taskResult
+            );
 
             $this->_view->renderLayout();
         } catch (Exception $exception) {
-            $this->taskSession->setData('task_error_reason', $exception->__toString());
+            $this->taskSession->setData(
+                'task_error_reason',
+                $exception->__toString()
+            );
 
             $resultRedirect->setPath('infrangible_task/run/error');
 
@@ -212,8 +233,5 @@ abstract class Run
         }
     }
 
-    /**
-     * @return string
-     */
     abstract protected function getTaskResourceId(): string;
 }
