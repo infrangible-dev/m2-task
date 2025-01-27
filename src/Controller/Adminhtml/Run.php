@@ -193,34 +193,59 @@ abstract class Run extends Action
 
             $this->appEmulation->stopEnvironmentEmulation();
 
-            $taskTitle = $this->taskHelper->getTaskConfigValue(
-                $taskName,
-                'data',
-                'title',
-                null,
-                false,
-                true
-            );
+            $redirectPath = $this->getRedirectPath();
 
-            $this->_view->loadLayout(['default', 'infrangible_task_run_result']);
+            if ($redirectPath) {
+                $runId = $task->getRun()->getId();
 
-            /** @var Template|bool $resultBlock */
-            $resultBlock = $this->_view->getLayout()->getBlock('task_result');
+                if ($this->isAddResultMessage()) {
+                    $this->addResultMessage(
+                        $taskName,
+                        $taskResult,
+                        $runId
+                    );
+                }
 
-            if ($resultBlock === false) {
-                throw new LocalizedException(__('Result block not found in layout'));
+                $resultRedirect->setPath($redirectPath);
+
+                return $resultRedirect;
+            } else {
+                $this->_view->loadLayout(['default', 'infrangible_task_run_result']);
+
+                /** @var Template|bool $resultBlock */
+                $resultBlock = $this->_view->getLayout()->getBlock('task_result');
+
+                if ($resultBlock === false) {
+                    throw new LocalizedException(__('Result block not found in layout'));
+                }
+
+                $taskTitle = $this->taskHelper->getTaskConfigValue(
+                    $taskName,
+                    'data',
+                    'title',
+                    null,
+                    false,
+                    true
+                );
+
+                $resultBlock->setData(
+                    'title',
+                    __($taskTitle)
+                );
+
+                $taskMessages = $task->getSummary(
+                    Base::SUMMARY_TYPE_ALL,
+                    false,
+                    true
+                );
+
+                $resultBlock->setData(
+                    'result',
+                    $taskMessages
+                );
+
+                $this->_view->renderLayout();
             }
-
-            $resultBlock->setData(
-                'title',
-                __($taskTitle)
-            );
-            $resultBlock->setData(
-                'result',
-                $taskResult
-            );
-
-            $this->_view->renderLayout();
         } catch (Exception $exception) {
             $this->taskSession->setData(
                 'task_error_reason',
@@ -234,4 +259,37 @@ abstract class Run extends Action
     }
 
     abstract protected function getTaskResourceId(): string;
+
+    protected function getRedirectPath(): ?string
+    {
+        return null;
+    }
+
+    protected function isAddResultMessage(): bool
+    {
+        return false;
+    }
+
+    protected function addResultMessage(string $taskName, bool $taskResult, $runId): void
+    {
+        $messageData = [
+            'task_name' => $taskName,
+            'run_url'   => $this->_url->getUrl(
+                'infrangible_task/run_result/view',
+                ['run_id' => $runId, 'back_route' => base64_encode('exutec_check24productexport/export')]
+            )
+        ];
+
+        if ($taskResult) {
+            $this->messageManager->addComplexSuccessMessage(
+                'taskSuccessMessage',
+                $messageData
+            );
+        } else {
+            $this->messageManager->addComplexErrorMessage(
+                'taskErrorMessage',
+                $messageData
+            );
+        }
+    }
 }

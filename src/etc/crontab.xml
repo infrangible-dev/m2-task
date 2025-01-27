@@ -10,5 +10,8 @@
         <job name="check_tasks" instance="Infrangible\Task\Cron\Check" method="execute">
             <schedule>* * * * *</schedule>
         </job>
+        <job name="clean_tasks" instance="Infrangible\Task\Cron\Clean" method="execute">
+            <schedule>0 0 * * *</schedule>
+        </job>
     </group>
 </config>

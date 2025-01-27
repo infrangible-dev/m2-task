@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+?>
+
+<?= $block->escapeHtml(
+    __(
+        'Task with name: %1 was not successfully executed. <a href="%2">View</a> the result.',
+        $block->getData('task_name'),
+        $block->getData('run_url')
+    ),
+    ['a']
+); ?>

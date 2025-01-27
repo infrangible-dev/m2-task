@@ -11,23 +11,19 @@ use Zend_Db_Select;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2025 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class Collection
-    extends AbstractCollection
+class Collection extends AbstractCollection
 {
-    /**
-     * @return void
-     */
-    public function _construct()
+    public function _construct(): void
     {
-        $this->_init(Run::class, \Infrangible\Task\Model\ResourceModel\Run::class);
+        $this->_init(
+            Run::class,
+            \Infrangible\Task\Model\ResourceModel\Run::class
+        );
     }
 
-    /**
-     * @return Select
-     */
     public function getSelectCountSql(): Select
     {
         $selectCount = parent::getSelectCountSql();
@@ -37,11 +33,29 @@ class Collection
         return $selectCount;
     }
 
-    /**
-     * @return void
-     */
-    public function addIsRunningFilter()
+    public function addIsRunningFilter(): void
     {
-        $this->addFieldToFilter('finish_at', ['null' => true]);
+        $this->addFieldToFilter(
+            'finish_at',
+            ['null' => true]
+        );
+    }
+
+    public function addStartAtFilter(int $days = 90): void
+    {
+        $startDate = new \DateTime();
+        $startDate->sub(
+            \DateInterval::createFromDateString(
+                sprintf(
+                    '%d day',
+                    $days
+                )
+            )
+        );
+
+        $this->addFieldToFilter(
+            'start_at',
+            ['lt' => $startDate->format('Y-m-d H:i:s')]
+        );
     }
 }

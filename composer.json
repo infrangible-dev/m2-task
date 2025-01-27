@@ -2,7 +2,7 @@
     "name": "infrangible/m2-task",
     "description": "Infrangible Magento 2 Task",
     "type": "magento2-module",
-    "version": "2.3.1",
+    "version": "2.4.0",
     "license": "MIT",
     "keywords": [
         "Magento"

@@ -14,11 +14,10 @@ use Magento\Backend\Block\Widget\ButtonFactory;
 
 /**
  * @author      Andreas Knollmann
- * @copyright   2014-2024 Softwareentwicklung Andreas Knollmann
+ * @copyright   2014-2025 Softwareentwicklung Andreas Knollmann
  * @license     http://www.opensource.org/licenses/mit-license.php MIT
  */
-class View
-    extends Template
+class View extends Template
 {
     /** @var Files */
     protected $fileHelper;
@@ -41,14 +40,6 @@ class View
     /** @var string */
     private $errorFileName;
 
-    /**
-     * @param Files                                            $fileHelper
-     * @param Context                                          $context
-     * @param RunFactory                                       $runFactory
-     * @param \Infrangible\Task\Model\ResourceModel\RunFactory $runResourceFactory
-     * @param ButtonFactory                                    $buttonFactory
-     * @param array                                            $data
-     */
     public function __construct(
         Files $fileHelper,
         Context $context,
@@ -57,7 +48,10 @@ class View
         ButtonFactory $buttonFactory,
         array $data = []
     ) {
-        parent::__construct($context, $data);
+        parent::__construct(
+            $context,
+            $data
+        );
 
         $this->fileHelper = $fileHelper;
 
@@ -66,21 +60,16 @@ class View
         $this->buttonFactory = $buttonFactory;
     }
 
-    /**
-     * Internal constructor, that is called from real constructor
-     *
-     * @return void
-     */
-    protected function _construct()
+    protected function _construct(): void
     {
-        $this->setData('template', 'Infrangible_Task::infrangible/task/run.phtml');
+        $this->setData(
+            'template',
+            'Infrangible_Task::infrangible/task/run.phtml'
+        );
 
         parent::_construct();
     }
 
-    /**
-     * @return Run
-     */
     protected function getRun(): Run
     {
         if ($this->run === null) {
@@ -88,17 +77,17 @@ class View
 
             $runId = $this->getData('run_id');
 
-            if (!empty($runId)) {
-                $this->runResourceFactory->create()->load($this->run, $runId);
+            if (! empty($runId)) {
+                $this->runResourceFactory->create()->load(
+                    $this->run,
+                    $runId
+                );
             }
         }
 
         return $this->run;
     }
 
-    /**
-     * @return string
-     */
     public function getLogFileName(): string
     {
         if ($this->logFileName === null) {
@@ -122,9 +111,6 @@ class View
         return $this->logFileName;
     }
 
-    /**
-     * @return array
-     */
     public function getContent(): array
     {
         $content = [];
@@ -135,22 +121,28 @@ class View
             $fileContent = file_get_contents($logFileName);
 
             if (is_string($fileContent)) {
-                $content = preg_split('/\n/', $fileContent);
+                $content = preg_split(
+                    '/\n/',
+                    $fileContent
+                );
 
-                $content = array_map('trim', $content);
+                $content = array_map(
+                    'trim',
+                    $content
+                );
             } else {
                 $content[] = 'Invalid file content!';
             }
         } else {
-            $content[] = sprintf('Log file does not exists at: %s', $logFileName);
+            $content[] = sprintf(
+                'Log file does not exists at: %s',
+                $logFileName
+            );
         }
 
         return $content;
     }
 
-    /**
-     * @return string
-     */
     public function getErrorFileName(): string
     {
         if ($this->errorFileName === null) {
@@ -174,9 +166,6 @@ class View
         return $this->errorFileName;
     }
 
-    /**
-     * @return array
-     */
     public function getErrorContent(): array
     {
         $content = [];
@@ -187,9 +176,15 @@ class View
             $fileContent = file_get_contents($errorFileName);
 
             if (is_string($fileContent)) {
-                $content = preg_split('/\n/', $fileContent);
+                $content = preg_split(
+                    '/\n/',
+                    $fileContent
+                );
 
-                $content = array_map('trim', $content);
+                $content = array_map(
+                    'trim',
+                    $content
+                );
             } else {
                 $content[] = 'Invalid file content!';
             }
@@ -198,11 +193,12 @@ class View
         return $content;
     }
 
-    /**
-     * @return string
-     */
     public function getBackButtonHtml(): string
     {
+        $backRoute = $this->getData('back_route');
+
+        $backRoute = $backRoute ? base64_decode($backRoute) : 'infrangible_task/run_result/index';
+
         $backButton = $this->buttonFactory->create(
             [
                 'data' => [
@@ -212,7 +208,7 @@ class View
                     'class'   => 'back',
                     'onclick' => sprintf(
                         "window.location.href = '%s';",
-                        $this->getUrl('infrangible_task/run_result/index')
+                        $this->getUrl($backRoute)
                     ),
                 ]
             ]

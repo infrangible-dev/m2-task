@@ -12,6 +12,7 @@ use Infrangible\Task\Helper\Data;
 use Infrangible\Task\Logger\ISummary;
 use Infrangible\Task\Logger\Monolog\Summary\AbstractSummary;
 use Infrangible\Task\Logger\Record;
+use Infrangible\Task\Model\Run;
 use Infrangible\Task\Model\RunFactory;
 use Magento\Framework\App\Bootstrap;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -90,6 +91,9 @@ abstract class Base implements AppInterface
 
     /** @var array */
     private $registryValues = [];
+
+    /** @var Run */
+    private $run;
 
     public function __construct(
         Files $files,
@@ -230,16 +234,16 @@ abstract class Base implements AppInterface
             throw new Exception(__('Task is not allowed to run with admin store.'));
         }
 
-        $run = $this->runFactory->create();
+        $this->run = $this->runFactory->create();
 
-        $run->start(
+        $this->run->start(
             $this->storeCode,
             $this->taskName,
             $this->taskId,
             $this->test
         );
 
-        $this->runResourceFactory->create()->save($run);
+        $this->runResourceFactory->create()->save($this->run);
 
         $start = time();
 
@@ -383,7 +387,7 @@ abstract class Base implements AppInterface
             )
         );
 
-        $run->finish(
+        $this->run->finish(
             intval(
                 bcsub(
                     strval($memoryUsageEnd),
@@ -394,7 +398,7 @@ abstract class Base implements AppInterface
             $this->isEmptyRun()
         );
 
-        $this->runResourceFactory->create()->save($run);
+        $this->runResourceFactory->create()->save($this->run);
 
         $this->resetRegistryValues();
 
@@ -527,7 +531,7 @@ abstract class Base implements AppInterface
     /**
      * @throws Exception
      */
-    public function launchFromAdmin(string $storeCode, string $taskName, bool $test = false): array
+    public function launchFromAdmin(string $storeCode, string $taskName, bool $test = false): bool
     {
         $this->init(
             $storeCode,
@@ -538,13 +542,7 @@ abstract class Base implements AppInterface
             $test
         );
 
-        $this->launch();
-
-        return $this->getSummary(
-            static::SUMMARY_TYPE_ALL,
-            false,
-            true
-        );
+        return $this->launch();
     }
 
     abstract protected function runTask(): bool;
@@ -978,12 +976,16 @@ abstract class Base implements AppInterface
                 )
             );
 
-
             if ($summary) {
                 foreach ($taskSummaryRecords as $taskSummaryRecord) {
                     $summary->addRecordToTaskHandler($taskSummaryRecord);
                 }
             }
         }
+    }
+
+    public function getRun(): Run
+    {
+        return $this->run;
     }
 }
