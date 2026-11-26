@@ -245,8 +245,12 @@ abstract class Base
             throw new LocalizedException(__('Task is not allowed to run with admin store.'));
         }
 
-        // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctions -- the module requires PHP 8.2
-        memory_reset_peak_usage();
+        // the peak memory usage of this run, not of the process before it; PHP 8.1 has no reset, there the peak of the
+        // process is reported
+        if (function_exists('memory_reset_peak_usage')) {
+            // phpcs:ignore PHPCompatibility.FunctionUse.NewFunctions -- only called where it exists (PHP 8.2 or newer)
+            memory_reset_peak_usage();
+        }
         $start = time();
 
         $run = $this->runFactory->create();

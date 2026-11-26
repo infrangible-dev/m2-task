@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.1
+
+### Changed
+
+- Supports PHP 8.1 again, like Magento 2.4.6: the Adobe Commerce Marketplace requires modules to allow every PHP
+  version of the Magento versions they support.
+- On PHP 8.1, the peak memory usage of a run includes the memory the process used before it, because PHP 8.1 cannot
+  reset it (`memory_reset_peak_usage()` exists since PHP 8.2).
+
 ## 3.0.0
 
 ### Breaking changes
