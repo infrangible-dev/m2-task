@@ -75,12 +75,12 @@ abstract class Base extends Value
         $config = $this->loadCronExpression();
 
         if ($config->getId()) {
-            $this->setValue($config->getValue());
+            $this->setData('value', $config->getData('value'));
         } else {
             $jobs = $this->configInterface->getJobs();
             $job = $jobs[ 'default' ][ $this->getJobName() ] ?? [];
 
-            $this->setValue(is_array($job) ? ($job[ 'schedule' ] ?? null) : null);
+            $this->setData('value', is_array($job) ? ($job[ 'schedule' ] ?? null) : null);
         }
 
         return $this;
@@ -96,10 +96,10 @@ abstract class Base extends Value
     {
         $config = $this->loadCronExpression();
 
-        $config->setPath($this->getCronExpressionPath());
-        $config->setScope('default');
-        $config->setScopeId(0);
-        $config->setValue($this->getValue());
+        $config->setData('path', $this->getCronExpressionPath());
+        $config->setData('scope', 'default');
+        $config->setData('scope_id', 0);
+        $config->setData('value', $this->getData('value'));
 
         try {
             $config->save();

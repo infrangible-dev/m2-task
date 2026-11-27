@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.2
+
+### Changed
+
+- The cron expression of task cron jobs is read and stored with `getData()` and `setData()` and the column names of
+  the configuration (`value`, `path`, `scope`, `scope_id`) instead of magic methods.
+
 ## 3.0.1
 
 ### Changed
